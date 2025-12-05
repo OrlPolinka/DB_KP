@@ -56,6 +56,18 @@ r.get('/products', async (_, res) => {
   res.json(resp.recordset);
 });
 
+r.get('/products/paged', async (req, res) => {
+  const pool = await getPool();
+  const page = Number(req.query.page ?? 1);
+  const size = Number(req.query.size ?? 50);
+  const resp = await pool.request()
+    .input('PageNumber', sql.Int, page)
+    .input('PageSize', sql.Int, size)
+    .execute('GetProductsPaged');
+  res.json(resp.recordset);
+});
+
+
 r.get('/products/top100', async (_, res) => {
   const pool = await getPool();
   const resp = await pool.request().execute('GetTop100Products');
@@ -301,31 +313,58 @@ r.post('/admin/promocodes/delete', requireAuth, async (req, res) => {
 });
 
 /* -------------------- LOGS -------------------- */
-r.get('/admin/logs', async (_, res) => {
+r.get('/admin/logs', async (req, res) => {
   const pool = await getPool();
-  const resp = await pool.request().query('SELECT LogID, UserID, Action, Timestamp FROM Logs ORDER BY LogID DESC');
+  const userId = Number(req.query.userId); // передаём ID админа
+  const resp = await pool.request()
+    .input('UserID', sql.Int, userId)
+    .execute('GetLogs');
   res.json(resp.recordset);
 });
 
 r.get('/admin/logs/export', async (_, res) => {
   const pool = await getPool();
   const resp = await pool.request().execute('ExportLogsToJSON');
-  // Некоторые драйверы возвращают JSON как единственный столбец; здесь отправим как строку
-  const data = resp.recordset as any;
-  if (Array.isArray(data) && data.length === 1 && typeof data[0] === 'object') {
+  // процедура возвращает JSON строкой
+  const data = resp.recordset;
+  if (Array.isArray(data) && data.length > 0) {
     const first = data[0];
     const json = Object.values(first)[0];
     return res.type('application/json').send(json);
   }
-  return res.json(data);
+  res.json(data);
 });
 
 r.post('/admin/logs/import', async (req, res) => {
-  const { filePath } = req.body;
   const pool = await getPool();
+  try {
+    // Принимаем JSON из тела запроса
+    const jsonData = req.body;
+    if (!jsonData || !Array.isArray(jsonData)) {
+      return res.status(400).json({ error: 'Неверный формат данных. Ожидается массив логов.' });
+    }
+    
+    // Преобразуем массив в JSON строку для передачи в процедуру
+    const jsonString = JSON.stringify(jsonData);
+    
+    // Вызываем процедуру с JSON параметром
+    await pool.request()
+      .input('JsonData', sql.NVarChar(sql.MAX), jsonString)
+      .execute('ImportLogsFromJSON');
+    
+    res.json({ ok: true });
+  } catch (err: any) {
+    console.error('Ошибка импорта:', err);
+    res.status(500).json({ error: err.message || 'Ошибка импорта логов' });
+  }
+});
+
+r.delete('/admin/logs', async (req, res) => {
+  const pool = await getPool();
+  const userId = Number(req.query.userId);
   await pool.request()
-    .input('FilePath', sql.NVarChar(4000), filePath)
-    .execute('ImportLogsFromJSON');
+    .input('UserID', sql.Int, userId)
+    .execute('DeleteLogs');
   res.json({ ok: true });
 });
 

@@ -1,8 +1,8 @@
 import axios from 'axios';
-import { getToken } from './auth';
+import { getToken, clearAuth } from './auth';
 
 export const api = axios.create({
-  baseURL: 'http://localhost:3001', // при желании поставь '/api' и добавь proxy в vite.config.ts
+  baseURL: 'http://localhost:3001', 
 });
 
 api.interceptors.request.use((config) => {
@@ -10,6 +10,23 @@ api.interceptors.request.use((config) => {
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
+
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Токен истек или недействителен - очищаем сессию
+      clearAuth();
+      // Перенаправляем на страницу авторизации только если не находимся там
+      if (window.location.pathname !== '/auth') {
+        window.location.href = '/auth';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 
 // Auth
 export const AuthAPI = {
@@ -29,6 +46,14 @@ export const ProductsAPI = {
   search: (q: string) => api.get('/products/search', { params: { q } }),
   byCategory: (params: { categoryId?: number; categoryName?: string }) =>
     api.get('/products/by-category', { params }),
+  listPaged: (page: number, size: number) =>
+    api.get('/products/paged', { params: { page, size } }),
+
+  searchPaged: (q: string, page: number, size: number) =>
+    api.get('/products/search-paged', { params: { q, page, size } }),
+
+  byCategoryPaged: (params: { categoryId?: number; categoryName?: string; page: number; size: number }) =>
+    api.get('/products/by-category-paged', { params }),
 };
 
 // Categories
@@ -98,7 +123,7 @@ export const AdminPromocodesAPI = {
 
 // Admin: Logs
 export const AdminLogsAPI = {
-  list: () => api.get('/admin/logs'),
+  list: (userId: number) => api.get('/admin/logs', { params: { userId } }),
   exportJSON: () => api.get('/admin/logs/export'),
-  importJSON: (filePath: string) => api.post('/admin/logs/import', { filePath }),
+  importJSON: () => api.post('/admin/logs/import'),
 };

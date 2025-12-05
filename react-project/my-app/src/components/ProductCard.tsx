@@ -16,6 +16,7 @@ export default function ProductCard({ p, onAction }: Props) {
   return (
     <div style={{ border: '1px solid #eee', padding: 12, marginBottom: 12 }}>
       <h3>{p.ProductName}</h3>
+      <img src={p.ImageURL} alt={p.ProductName} style={{ width: 200 }} />
       <p>{p.Description}</p>
       <p>Категория: {p.CategoryName ?? p.CategoryID}</p>
       <p>Цена: {(p.DiscountedPrice ?? p.Price).toFixed(2)}</p>

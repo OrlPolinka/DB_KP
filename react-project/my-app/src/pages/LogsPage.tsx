@@ -4,10 +4,9 @@ import type { LogRow } from '../types';
 
 export default function LogsPage() {
   const [logs, setLogs] = useState<LogRow[]>([]);
-  const [filePath, setFilePath] = useState('');
 
   const load = async () => {
-    try { setLogs((await AdminLogsAPI.list()).data); }
+    try { setLogs((await AdminLogsAPI.list(1)).data); }
     catch (e: any) { alert(e.response?.data?.error ?? 'Ошибка загрузки лога'); }
   };
 
@@ -26,9 +25,13 @@ export default function LogsPage() {
   };
 
   const importJSON = async () => {
-    if (!filePath) return alert('Укажи путь к файлу на сервере');
-    try { await AdminLogsAPI.importJSON(filePath); alert('Лог импортирован'); load(); }
-    catch (e: any) { alert(e.response?.data?.error ?? 'Ошибка импорта'); }
+    try { 
+      await AdminLogsAPI.importJSON(); 
+      alert('Лог импортирован'); 
+      load(); 
+    } catch (e: any) { 
+      alert(e.response?.data?.error ?? 'Ошибка импорта'); 
+    }
   };
 
   useEffect(() => { load(); }, []);
@@ -38,7 +41,6 @@ export default function LogsPage() {
       <h2>Лог действий админа</h2>
       <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
         <button onClick={exportJSON}>Экспорт в JSON</button>
-        <input placeholder="Путь к файлу (на сервере)" value={filePath} onChange={e => setFilePath(e.target.value)} />
         <button onClick={importJSON}>Импорт из JSON</button>
       </div>
       {logs.map(l => (

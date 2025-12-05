@@ -737,3 +737,31 @@ begin catch
 end catch
 go
 
+create or alter procedure GetProductsPaged
+	@PageNumber int,
+	@PageSize int
+as begin try
+	if @PageNumber is null or @PageNumber < 1 set @PageNumber = 1;
+    if @PageSize is null or @PageSize < 1 set @PageSize = 50;
+
+	select 
+		p.ProductID,
+        p.ProductName,
+        p.Description,
+        p.CategoryID,
+        c.CategoryName,
+        p.Price,
+        dbo.func_GetDiscountedPrice(p.Price, pr.DiscountPercent) as DiscountedPrice,
+        p.StockQuantity,
+        p.ImageURL
+	from Products p
+	join Categories c on p.CategoryID = c.CategoryID
+	left join Promocodes pr on pr.CategoryID = p.CategoryID and getdate() between pr.ValidFrom and pr.ValidTo
+	order by p.ProductID
+	offset (@PageNumber - 1) * @PageSize rows
+	fetch next @PageSize rows only;
+end try
+begin catch
+	print 'Îøèáêà: ' + error_message();
+end catch
+go

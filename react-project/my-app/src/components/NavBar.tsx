@@ -1,13 +1,32 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { getUser, clearAuth } from '../auth';
+import { useState, useEffect } from 'react';
+import { getUser, clearAuth, SessionUser } from '../auth';
 
 export default function NavBar() {
-  const user = getUser();
+  const [user, setUser] = useState<SessionUser | null>(getUser());
   const nav = useNavigate();
   const loc = useLocation();
 
+// Слушаем изменения localStorage для обновления состояния пользователя
+useEffect(() => {
+  const handleStorageChange = () => {
+    setUser(getUser());
+  };
+
+  // Слушаем события storage (когда localStorage изменяется в другой вкладке)
+  window.addEventListener('storage', handleStorageChange);
+  
+  // Также проверяем при изменении маршрута
+  setUser(getUser());
+
+  return () => {
+    window.removeEventListener('storage', handleStorageChange);
+  };
+}, [loc.pathname]);ы
+
   const logout = () => {
     clearAuth();
+    setUser(null);
     if (loc.pathname !== '/') nav('/');
   };
 

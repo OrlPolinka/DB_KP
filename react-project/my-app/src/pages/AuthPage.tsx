@@ -1,17 +1,21 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AuthAPI } from '../api';
 import { setAuth, getUser, clearAuth } from '../auth';
 import { useNavigate } from 'react-router-dom';
 
 export default function AuthPage() {
   const nav = useNavigate();
-  const current = getUser();
+  const [current, setCurrent] = useState(getUser());
 
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState(''); // простота: используем как PasswordHash
   const [email, setEmail] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(false);
+
+  useEffect(() => {
+    setCurrent(getUser());
+  }, []);
 
   const submit = async () => {
     try {
@@ -22,7 +26,10 @@ export default function AuthPage() {
         const r = await AuthAPI.login({ username, passwordHash: password });
         setAuth(r.data.token, r.data.user);
       }
+      setCurrent(getUser());
       nav('/');
+      // Обновляем страницу для синхронизации состояния
+      window.dispatchEvent(new Event('storage'));
     } catch (e: any) {
       alert(e.response?.data?.error ?? 'Ошибка авторизации');
     }
@@ -34,6 +41,7 @@ export default function AuthPage() {
       clearAuth();
       alert('Учетная запись удалена');
       nav('/');
+      window.dispatchEvent(new Event('storage'));
     } catch (e: any) {
       alert(e.response?.data?.error ?? 'Ошибка удаления аккаунта');
     }

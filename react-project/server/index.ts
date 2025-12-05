@@ -16,6 +16,7 @@ app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
 
 app.use(bodyParser.json());
 app.use('/', routes);
+app.use('/images', express.static('C:/Users/user/Desktop/лк, экз/бд/3 курс/кп/DB_KP/images'));
 
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error('Необработанная ошибка:', err);

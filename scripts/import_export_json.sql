@@ -19,18 +19,17 @@ go
 ------------------------------------------------------- Импорт -------------------------------------------------------
 
 create or alter procedure ImportLogsFromJSON
+	@JsonData nvarchar(MAX)
 as begin try
 	begin transaction
 
-	declare @json nvarchar(max);
-	select @json = BulkColumn from openrowset(bulk 'C:\Users\user\Desktop\лк, экз\бд\3 курс\кп\DB_KP\json\Logs.json', single_clob) as j;
-
 	insert into Logs(UserID, Action, Timestamp)
-	select UserID, Action, Timestamp from openjson(@json)
+	select UserID, Action, Timestamp from openjson(@JsonData)
 	with (UserID int,
 		Action nvarchar(250),
 		Timestamp datetime
 	);
+
 
 	commit transaction;
 end try

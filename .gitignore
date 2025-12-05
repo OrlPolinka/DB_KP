@@ -16,7 +16,6 @@ yarn-error.log*
 
 # Database dumps / backups
 *.bak
-*.sql
 *.db
 
 # Frontend (React + Vite + TypeScript)

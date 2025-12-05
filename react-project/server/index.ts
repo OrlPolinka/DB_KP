@@ -1,0 +1,25 @@
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import bodyParser from 'body-parser';
+import routes from './routes';
+
+dotenv.config();
+
+const app = express();
+const PORT = Number(process.env.PORT || 3001);
+
+app.use(cors({ origin: ['http://localhost:3000'] }));
+app.use(express.json({ limit: '2mb' }));
+
+app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
+
+app.use(bodyParser.json());
+app.use('/', routes);
+
+app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  console.error('Необработанная ошибка:', err);
+  res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+});
+
+app.listen(PORT, () => console.log(`Server: http://localhost:${PORT}`));

@@ -1,0 +1,44 @@
+# Node.js / Express / MSSQL backend
+node_modules/
+build/
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Database dumps / backups
+*.bak
+*.sql
+*.db
+
+# Frontend (React + Vite + TypeScript)
+node_modules/
+dist/
+.vite/
+*.tsbuildinfo
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Coverage / testing
+coverage/
+*.lcov
+
+# Misc
+*.tmp
+*.temp

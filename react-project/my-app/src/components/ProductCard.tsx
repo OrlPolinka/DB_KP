@@ -1,29 +1,54 @@
 import type { Product } from '../types';
 import { Link } from 'react-router-dom';
 import { CartAPI, FavoritesAPI } from '../api';
+import { getUser } from '../auth';
 
 type Props = { p: Product; onAction?: () => void };
 
 export default function ProductCard({ p, onAction }: Props) {
+  const user = getUser();
+
   const addToCart = async () => {
-    try { await CartAPI.addDelta(p.ProductID, 1); onAction?.(); }
-    catch (e: any) { alert(e.response?.data?.error ?? 'Ошибка добавления в корзину'); }
+    if (!user) {
+      alert('Необходимо войти в систему');
+      return;
+    }
+    try {
+      await CartAPI.addDelta(p.ProductID, 1);
+      onAction?.();
+    } catch (e: any) {
+      alert(e.response?.data?.error ?? 'Ошибка добавления в корзину');
+    }
   };
+
   const addToFav = async () => {
-    try { await FavoritesAPI.add(p.ProductID); onAction?.(); }
-    catch (e: any) { alert(e.response?.data?.error ?? 'Ошибка добавления в избранное'); }
+    if (!user) {
+      alert('Необходимо войти в систему');
+      return;
+    }
+    try {
+      await FavoritesAPI.add(p.ProductID);
+      onAction?.();
+    } catch (e: any) {
+      alert(e.response?.data?.error ?? 'Ошибка добавления в избранное');
+    }
   };
+
   return (
-    <div style={{ border: '1px solid #eee', padding: 12, marginBottom: 12 }}>
-      <h3>{p.ProductName}</h3>
-      <img src={p.ImageURL} alt={p.ProductName} style={{ width: 200 }} />
-      <p>{p.Description}</p>
-      <p>Категория: {p.CategoryName ?? p.CategoryID}</p>
-      <p>Цена: {(p.DiscountedPrice ?? p.Price).toFixed(2)}</p>
-      <div style={{ display: 'flex', gap: 8 }}>
-        <Link to={`/product/${p.ProductID}`}>Подробнее</Link>
-        <button onClick={addToCart}>В корзину</button>
-        <button onClick={addToFav}>В избранное</button>
+    <div className="product-card">
+      {p.ImageURL && (
+        <img src={p.ImageURL} alt={p.ProductName} style={{ width: '100%', height: 200, objectFit: 'cover' }} />
+      )}
+      <h3 style={{ marginTop: 'var(--spacing-sm)' }}>{p.ProductName}</h3>
+      <p className="text-muted" style={{ fontSize: '0.875rem', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+        {p.Description}
+      </p>
+      <p className="text-muted">Категория: {p.CategoryName ?? p.CategoryID}</p>
+      <p><strong>Цена: {(p.DiscountedPrice ?? p.Price).toFixed(2)}</strong></p>
+      <div className="flex gap-sm" style={{ flexWrap: 'wrap' }}>
+        <Link to={`/product/${p.ProductID}`} className="badge badge-primary">Подробнее</Link>
+        <button onClick={addToCart} style={{ flex: 1 }}>В корзину</button>
+        <button onClick={addToFav} className="secondary" style={{ flex: 1 }}>В избранное</button>
       </div>
     </div>
   );

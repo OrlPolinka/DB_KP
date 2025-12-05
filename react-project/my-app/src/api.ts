@@ -125,5 +125,5 @@ export const AdminPromocodesAPI = {
 export const AdminLogsAPI = {
   list: (userId: number) => api.get('/admin/logs', { params: { userId } }),
   exportJSON: () => api.get('/admin/logs/export'),
-  importJSON: () => api.post('/admin/logs/import'),
+  importJSON: (data: any[]) => api.post('/admin/logs/import', data),
 };

@@ -137,5 +137,12 @@ exec ExportLogsToJSON;
 exec GetLogs @UserID = 1;
 exec DeleteLogs @UserID = 1;
 
+declare @json nvarchar(max);
 
-exec ImportLogsFromJSON;
+select @json = BulkColumn
+from openrowset(
+  bulk 'C:\Users\user\Desktop\λκ, ύκη\αδ\3 κσπρ\κο\DB_KP\json\Logs.json',
+  single_clob
+) as j;
+
+exec ImportLogsFromJSON @JsonData = @json;

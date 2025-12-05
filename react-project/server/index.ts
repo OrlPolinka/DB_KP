@@ -3,13 +3,17 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import bodyParser from 'body-parser';
 import routes from './routes';
+import { getPool } from './db';
+
+getPool();
+
 
 dotenv.config();
 
 const app = express();
 const PORT = Number(process.env.PORT || 3001);
 
-app.use(cors({ origin: ['http://localhost:3000'] }));
+app.use(cors({ origin: ['http://localhost:3000', 'http://localhost:5173'] }));
 app.use(express.json({ limit: '2mb' }));
 
 app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));

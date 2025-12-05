@@ -11,7 +11,10 @@ const config: sql.config = {
   database: process.env.SQL_DATABASE,
   options: {
     trustServerCertificate: true,
-    encrypt: (process.env.SQL_ENCRYPT || 'false') === 'true'
+    encrypt: (process.env.SQL_ENCRYPT || 'false') === 'true',
+    // Настройка кодировки для правильной работы с кириллицей
+    enableArithAbort: true,
+    requestTimeout: 30000,
   },
   pool: { max: 10, min: 0, idleTimeoutMillis: 30000 }
 };
@@ -29,9 +32,6 @@ export const getPool = () => {
       console.error('MSSQL ошибка подключения:', err);
       throw err; 
     });
-
-
-
   }
   return poolPromise;
 };

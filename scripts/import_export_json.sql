@@ -30,7 +30,6 @@ as begin try
 		Timestamp datetime
 	);
 
-
 	commit transaction;
 end try
 begin catch

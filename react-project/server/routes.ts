@@ -70,8 +70,23 @@ r.get('/products/paged', async (req, res) => {
 
 r.get('/products/top100', async (_, res) => {
   const pool = await getPool();
-  const resp = await pool.request().execute('GetTop100Products');
-  res.json(resp.recordset);
+  try {
+    const resp = await pool.request().execute('GetTop100Products');
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    
+    // Проверяем, что данные есть и в правильном формате
+    const data = resp.recordset || [];
+    if (!Array.isArray(data)) {
+      console.error('Топ-100: неверный формат данных', data);
+      return res.json([]);
+    }
+    
+    res.json(data);
+  } catch (err: any) {
+    console.error('Ошибка загрузки топ-100:', err);
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.status(500).json({ error: err.message || 'Ошибка загрузки топ-100' });
+  }
 });
 
 r.get('/products/:id', async (req, res) => {
@@ -86,28 +101,151 @@ r.get('/products/:id', async (req, res) => {
 
 r.get('/products/search', async (req, res) => {
   const pool = await getPool();
-  const resp = await pool.request()
-    .input('Keyword', sql.NVarChar(sql.MAX), String(req.query.q || ''))
-    .execute('SearchProducts');
-  res.json(resp.recordset);
+  try {
+    const keyword = String(req.query.q || '');
+    const resp = await pool.request()
+      .input('Keyword', sql.NVarChar(sql.MAX), keyword)
+      .execute('SearchProducts');
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.json(resp.recordset || []);
+  } catch (err: any) {
+    console.error('Ошибка поиска:', err);
+    res.status(500).json({ error: err.message || 'Ошибка поиска' });
+  }
+});
+
+r.get('/products/search-paged', async (req, res) => {
+  const pool = await getPool();
+  const page = Number(req.query.page ?? 1);
+  const size = Number(req.query.size ?? 50);
+  const keyword = String(req.query.q || '').trim();
+  
+  if (!keyword) {
+    return res.json([]);
+  }
+  
+  try {
+    // Сначала пробуем вызвать пагинированную процедуру
+    const resp = await pool.request()
+      .input('Keyword', sql.NVarChar(sql.MAX), keyword)
+      .input('PageNumber', sql.Int, page)
+      .input('PageSize', sql.Int, size)
+      .execute('SearchProductsPaged');
+    
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    const data = resp.recordset || [];
+    res.json(Array.isArray(data) ? data : []);
+  } catch (err: any) {
+    // Если процедура не существует, используем обычный поиск и пагинацию на клиенте
+    try {
+      const resp = await pool.request()
+        .input('Keyword', sql.NVarChar(sql.MAX), keyword)
+        .execute('SearchProducts');
+      
+      const all = resp.recordset || [];
+      if (!Array.isArray(all)) {
+        return res.json([]);
+      }
+      
+      const start = (page - 1) * size;
+      const end = start + size;
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      res.json(all.slice(start, end));
+    } catch (err2: any) {
+      console.error('Ошибка поиска:', err2);
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      res.status(500).json({ error: err2.message || 'Ошибка поиска' });
+    }
+  }
 });
 
 r.get('/products/by-category', async (req, res) => {
   const pool = await getPool();
-  const { categoryId, categoryName } = req.query;
-  if (categoryId) {
-    const resp = await pool.request()
-      .input('CategoryID', sql.Int, Number(categoryId))
-      .execute('FilterSearchProducts');
-    return res.json(resp.recordset);
+  try {
+    const { categoryId, categoryName } = req.query;
+    if (categoryId) {
+      const resp = await pool.request()
+        .input('CategoryID', sql.Int, Number(categoryId))
+        .execute('FilterSearchProducts');
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      return res.json(resp.recordset || []);
+    }
+    if (categoryName) {
+      const resp = await pool.request()
+        .input('CategoryName', sql.NVarChar(200), String(categoryName))
+        .execute('FilterSearchProducts');
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      return res.json(resp.recordset || []);
+    }
+    res.json([]);
+  } catch (err: any) {
+    console.error('Ошибка фильтрации по категории:', err);
+    res.status(500).json({ error: err.message || 'Ошибка фильтрации' });
   }
-  if (categoryName) {
-    const resp = await pool.request()
-      .input('CategoryName', sql.NVarChar(200), String(categoryName))
-      .execute('FilterSearchProducts');
-    return res.json(resp.recordset);
+});
+
+r.get('/products/by-category-paged', async (req, res) => {
+  const pool = await getPool();
+  const { categoryId, categoryName, page, size } = req.query;
+  const pageNum = Number(page ?? 1);
+  const pageSize = Number(size ?? 50);
+  
+  if (!categoryId && !categoryName) {
+    return res.json([]);
   }
-  res.json([]);
+  
+  try {
+    let resp;
+    if (categoryId) {
+      resp = await pool.request()
+        .input('CategoryID', sql.Int, Number(categoryId))
+        .input('PageNumber', sql.Int, pageNum)
+        .input('PageSize', sql.Int, pageSize)
+        .execute('FilterSearchProductsPaged');
+    } else if (categoryName) {
+      resp = await pool.request()
+        .input('CategoryName', sql.NVarChar(200), String(categoryName))
+        .input('PageNumber', sql.Int, pageNum)
+        .input('PageSize', sql.Int, pageSize)
+        .execute('FilterSearchProductsPaged');
+    } else {
+      return res.json([]);
+    }
+    
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    const data = resp.recordset || [];
+    res.json(Array.isArray(data) ? data : []);
+  } catch (err: any) {
+    // Если процедура не существует, используем обычную фильтрацию и пагинацию на клиенте
+    try {
+      let resp;
+      if (categoryId) {
+        resp = await pool.request()
+          .input('CategoryID', sql.Int, Number(categoryId))
+          .execute('FilterSearchProducts');
+      } else if (categoryName) {
+        resp = await pool.request()
+          .input('CategoryName', sql.NVarChar(200), String(categoryName))
+          .execute('FilterSearchProducts');
+      } else {
+        return res.json([]);
+      }
+      
+      const all = resp.recordset || [];
+      if (!Array.isArray(all)) {
+        return res.json([]);
+      }
+      
+      const start = (pageNum - 1) * pageSize;
+      const end = start + pageSize;
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      res.json(all.slice(start, end));
+    } catch (err2: any) {
+      console.error('Ошибка фильтрации:', err2);
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      res.status(500).json({ error: err2.message || 'Ошибка фильтрации' });
+    }
+  }
 });
 
 /* -------------------- CATEGORIES -------------------- */
@@ -315,24 +453,59 @@ r.post('/admin/promocodes/delete', requireAuth, async (req, res) => {
 /* -------------------- LOGS -------------------- */
 r.get('/admin/logs', async (req, res) => {
   const pool = await getPool();
-  const userId = Number(req.query.userId); // передаём ID админа
-  const resp = await pool.request()
-    .input('UserID', sql.Int, userId)
-    .execute('GetLogs');
-  res.json(resp.recordset);
+  try {
+    const userId = Number(req.query.userId);
+    const resp = await pool.request()
+      .input('UserID', sql.Int, userId)
+      .execute('GetLogs');
+    
+    // Устанавливаем правильную кодировку для ответа
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    
+    // Преобразуем данные, убеждаясь в правильной кодировке
+    const logs = (resp.recordset || []).map((log: any) => {
+      // Если Action приходит как Buffer (проблема с кодировкой), конвертируем
+      let action = log.Action;
+      if (Buffer.isBuffer(action)) {
+        action = action.toString('utf8');
+      } else if (typeof action === 'string') {
+        // Убеждаемся, что строка правильно декодирована
+        action = action;
+      }
+      
+      return {
+        LogID: log.LogID,
+        UserID: log.UserID,
+        Action: action,
+        Timestamp: log.Timestamp
+      };
+    });
+    
+    res.json(logs);
+  } catch (err: any) {
+    console.error('Ошибка загрузки логов:', err);
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.status(500).json({ error: err.message || 'Ошибка загрузки логов' });
+  }
 });
 
 r.get('/admin/logs/export', async (_, res) => {
   const pool = await getPool();
-  const resp = await pool.request().execute('ExportLogsToJSON');
-  // процедура возвращает JSON строкой
-  const data = resp.recordset;
-  if (Array.isArray(data) && data.length > 0) {
-    const first = data[0];
-    const json = Object.values(first)[0];
-    return res.type('application/json').send(json);
+  try {
+    const resp = await pool.request().execute('ExportLogsToJSON');
+    const data = resp.recordset;
+    if (Array.isArray(data) && data.length > 0) {
+      const first = data[0];
+      const json = Object.values(first)[0];
+      // Устанавливаем правильную кодировку
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      return res.send(json);
+    }
+    res.json(data);
+  } catch (err: any) {
+    console.error('Ошибка экспорта:', err);
+    res.status(500).json({ error: err.message || 'Ошибка экспорта' });
   }
-  res.json(data);
 });
 
 r.post('/admin/logs/import', async (req, res) => {

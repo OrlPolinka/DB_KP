@@ -1,6 +1,7 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { getUser, clearAuth, SessionUser } from '../auth';
+import { getUser, clearAuth } from '../auth';
+import type { SessionUser } from '../auth';
 
 export default function NavBar() {
   const [user, setUser] = useState<SessionUser | null>(getUser());
@@ -22,7 +23,7 @@ useEffect(() => {
   return () => {
     window.removeEventListener('storage', handleStorageChange);
   };
-}, [loc.pathname]);ы
+}, [loc.pathname]);
 
   const logout = () => {
     clearAuth();

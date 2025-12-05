@@ -132,7 +132,7 @@ set context_info @bin;
 exec ExportLogsToJSON;
 
 
--- sqlcmd -S localhost -d OnlineClothingShop -Q "EXEC ExportLogsToJSON" -o "C:\Users\user\Desktop\λκ, ύκη\αδ\3 κσπρ\κο\DB_KP\Logs.json" -h -1 -r 1 -y 8000
+-- sqlcmd -S localhost -d OnlineClothingShop -Q "EXEC ExportLogsToJSON" -o "C:\Users\user\Desktop\λκ, ύκη\αδ\3 κσπρ\κο\DB_KP\json\Logs.json" -h -1 -r 1 -y 8000
 
 exec GetLogs @UserID = 1;
 exec DeleteLogs @UserID = 1;

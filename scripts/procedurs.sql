@@ -4,7 +4,7 @@ as begin try
 	select * from vw_top100Products;
 end try
 begin catch
-	print 'Ошибка: ' + error_message();
+	print 'РћС€РёР±РєР°: ' + error_message();
 end catch
 
 
@@ -23,7 +23,7 @@ as begin try
 		where UserRoles.UserID = @UserID and Roles.RoleName = 'Admin'
 	)
 	begin
-		raiserror('Доступ запрещен: только администратор может добавлять товары', 16, 1);
+		raiserror('Р”РѕСЃС‚СѓРї Р·Р°РїСЂРµС‰РµРЅ: С‚РѕР»СЊРєРѕ Р°РґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂ РјРѕР¶РµС‚ РґРѕР±Р°РІР»СЏС‚СЊ С‚РѕРІР°СЂС‹', 16, 1);
 		return;
 	end;
 
@@ -31,7 +31,8 @@ as begin try
 		values (@ProductName, @Description, @CategoryID, @Price, @StockQuantity, @ImageURL);
 end try
 begin catch
-	print 'Ошибка: ' + error_message();
+	declare @ErrorMessage nvarchar(4000) = error_message();
+	raiserror(@ErrorMessage, 16, 1);
 end catch
 go
 
@@ -53,7 +54,7 @@ as begin try
 		where UserRoles.UserID = @UserID and Roles.RoleName = 'Admin'
 	)
 	begin
-		raiserror('Доступ запрещен: только администратор может изменять товары', 16, 1);
+		raiserror('Р”РѕСЃС‚СѓРї Р·Р°РїСЂРµС‰РµРЅ: С‚РѕР»СЊРєРѕ Р°РґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂ РјРѕР¶РµС‚ РёР·РјРµРЅСЏС‚СЊ С‚РѕРІР°СЂС‹', 16, 1);
 		return;
 	end;
 
@@ -70,7 +71,8 @@ as begin try
 end try
 begin catch
 	rollback transaction;
-	print 'Ошибка: ' + error_message();
+	declare @ErrorMessage nvarchar(4000) = error_message();
+	raiserror(@ErrorMessage, 16, 1);
 end catch
 go
 
@@ -86,7 +88,7 @@ as begin try
 		where UserRoles.UserID = @UserID and Roles.RoleName = 'Admin'
 	)
 	begin
-		raiserror('Доступ запрещен: только администратор может удалять товары', 16, 1);
+		raiserror('Р”РѕСЃС‚СѓРї Р·Р°РїСЂРµС‰РµРЅ: С‚РѕР»СЊРєРѕ Р°РґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂ РјРѕР¶РµС‚ СѓРґР°Р»СЏС‚СЊ С‚РѕРІР°СЂС‹', 16, 1);
 		return;
 	end;
 
@@ -96,7 +98,8 @@ as begin try
 end try
 begin catch
 	rollback transaction;
-	print 'Ошибка: ' + error_message();
+	declare @ErrorMessage nvarchar(4000) = error_message();
+	raiserror(@ErrorMessage, 16, 1);
 end catch
 go
 
@@ -121,7 +124,7 @@ as begin try
 	where p.ProductName like '%' + @Keyword + '%';
 end try
 begin catch
-	print 'Ошибка: ' + error_message();
+	print 'РћС€РёР±РєР°: ' + error_message();
 end catch
 go
 
@@ -147,26 +150,14 @@ begin try
     where p.ProductID = @ProductID;
 end try
 begin catch
-    print 'Ошибка: ' + error_message();
+    print 'РћС€РёР±РєР°: ' + error_message();
 end catch;
 go
 
 
 create or alter procedure FilterSearchProducts
-	@CategoryID int = null,
-	@CategoryName nvarchar(200) = null
+	@CategoryID int = null
 as begin try
-	declare @c_id int;
-	if @CategoryID is not null
-		set @c_id = @CategoryID;
-	else if @CategoryName is not null
-		select @c_id = @CategoryID from Categories where CategoryName = @CategoryName;
-
-	if @c_id is null
-	begin
-		raiserror('Категория не найдена', 16, 1);
-		return;
-	end;
 
 	select 
 	ProductID, ProductName, Description, Categories.CategoryName, Price,
@@ -175,10 +166,10 @@ as begin try
 	on Categories.CategoryID = Products.CategoryID
 	left join Promocodes on Promocodes.CategoryID = Products.CategoryID 
 	and getdate() between Promocodes.ValidFrom and Promocodes.ValidTo 
-	where Categories.CategoryID = @c_id;
+	where Categories.CategoryID = @CategoryID;
 end try
 begin catch
-	print 'Ошибка: ' + error_message();
+	print 'РћС€РёР±РєР°: ' + error_message();
 end catch
 go
 
@@ -192,14 +183,14 @@ as begin try
 		where UserRoles.UserID = @UserID and Roles.RoleName = 'User'
 	)
 	begin
-		raiserror('Доступ запрещен: только авторизованный пользователь имеет доступ к избранному', 16, 1);
+		raiserror('Р”РѕСЃС‚СѓРї Р·Р°РїСЂРµС‰РµРЅ: С‚РѕР»СЊРєРѕ Р°РІС‚РѕСЂРёР·РѕРІР°РЅРЅС‹Р№ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ РёРјРµРµС‚ РґРѕСЃС‚СѓРї Рє РёР·Р±СЂР°РЅРЅРѕРјСѓ', 16, 1);
 		return;
 	end;
 
 	insert into Favorites(UserID, ProductID) values (@UserID, @ProductID);
 end try
 begin catch
-	print 'Ошибка: ' + error_message();
+	print 'РћС€РёР±РєР°: ' + error_message();
 end catch
 go
 
@@ -213,14 +204,14 @@ as begin try
 		where UserRoles.UserID = @UserID and Roles.RoleName = 'User'
 	)
 	begin
-		raiserror('Доступ запрещен: только авторизованный пользователь имеет доступ к избранному', 16, 1);
+		raiserror('Р”РѕСЃС‚СѓРї Р·Р°РїСЂРµС‰РµРЅ: С‚РѕР»СЊРєРѕ Р°РІС‚РѕСЂРёР·РѕРІР°РЅРЅС‹Р№ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ РёРјРµРµС‚ РґРѕСЃС‚СѓРї Рє РёР·Р±СЂР°РЅРЅРѕРјСѓ', 16, 1);
 		return;
 	end;
 
 	delete from Favorites where UserID = @UserID and ProductID = @ProductID;
 end try
 begin catch
-	print 'Ошибка: ' + error_message();
+	print 'РћС€РёР±РєР°: ' + error_message();
 end catch
 go
 
@@ -235,7 +226,7 @@ as begin try
 	and getdate() between Promocodes.ValidFrom and Promocodes.ValidTo;
 end try
 begin catch
-	print 'Ошибка: ' + error_message();
+	print 'РћС€РёР±РєР°: ' + error_message();
 end catch
 go
 
@@ -248,7 +239,7 @@ as begin try
 		where UserRoles.UserID = @UserID and Roles.RoleName = 'User'
 	)
 	begin
-		raiserror('Доступ запрещен: только авторизованный пользователь имеет доступ к избранному', 16, 1);
+		raiserror('Р”РѕСЃС‚СѓРї Р·Р°РїСЂРµС‰РµРЅ: С‚РѕР»СЊРєРѕ Р°РІС‚РѕСЂРёР·РѕРІР°РЅРЅС‹Р№ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ РёРјРµРµС‚ РґРѕСЃС‚СѓРї Рє РёР·Р±СЂР°РЅРЅРѕРјСѓ', 16, 1);
 		return;
 	end;
 
@@ -259,7 +250,7 @@ as begin try
 	where UserID = @UserID;
 end try
 begin catch
-	print 'Ошибка: ' + error_message();
+	print 'РћС€РёР±РєР°: ' + error_message();
 end catch
 go
 
@@ -273,14 +264,14 @@ as begin try
 		where UserRoles.UserID = @UserID and Roles.RoleName = 'User'
 	)
 	begin
-		raiserror('Доступ запрещен: только авторизованный пользователь имеет доступ к корзине', 16, 1);
+		raiserror('Р”РѕСЃС‚СѓРї Р·Р°РїСЂРµС‰РµРЅ: С‚РѕР»СЊРєРѕ Р°РІС‚РѕСЂРёР·РѕРІР°РЅРЅС‹Р№ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ РёРјРµРµС‚ РґРѕСЃС‚СѓРї Рє РєРѕСЂР·РёРЅРµ', 16, 1);
 		return;
 	end;
 
 	delete from CartItems where UserID = @UserID and ProductID = @ProductID;
 end try
 begin catch
-	print 'Ошибка: ' + error_message();
+	print 'РћС€РёР±РєР°: ' + error_message();
 end catch
 go
 
@@ -296,22 +287,66 @@ as begin try
 		where UserRoles.UserID = @UserID and Roles.RoleName = 'User'
 	)
 	begin
-		raiserror('Доступ запрещен: только авторизованный пользователь имеет доступ', 16, 1);
+		raiserror('Р”РѕСЃС‚СѓРї Р·Р°РїСЂРµС‰РµРЅ: С‚РѕР»СЊРєРѕ Р°РІС‚РѕСЂРёР·РѕРІР°РЅРЅС‹Р№ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ РёРјРµРµС‚ РґРѕСЃС‚СѓРї', 16, 1);
 		return;
 	end;
 
-	declare @TotalPrice decimal(10, 2);
+	-- РџСЂРѕРІРµСЂРєР° РЅР°Р»РёС‡РёСЏ С‚РѕРІР°СЂРѕРІ РЅР° СЃРєР»Р°РґРµ
+	declare @MissingProduct nvarchar(100);
+	select top 1 @MissingProduct = Products.ProductName
+	from CartItems 
+	join Products on CartItems.ProductID = Products.ProductID
+	where CartItems.UserID = @UserID 
+		and Products.StockQuantity < CartItems.Quantity;
+	
+	if @MissingProduct is not null
+	begin
+		raiserror('РћС€РёР±РєР° РѕС„РѕСЂРјР»РµРЅРёСЏ: С‚РѕРІР°СЂР° РЅРµС‚ РЅР° СЃРєР»Р°РґРµ - %s', 16, 1, @MissingProduct);
+		rollback transaction;
+		return;
+	end;
+
+	-- РџРѕР»СѓС‡Р°РµРј РёРЅС„РѕСЂРјР°С†РёСЋ Рѕ РїСЂРѕРјРѕРєРѕРґРµ
+	declare @PromoDiscountPercent int = null;
+	declare @PromoIsGlobal bit = 0;
+	declare @PromoCategoryID int = null;
+	
+	if @PromoID is not null
+	begin
+		select @PromoDiscountPercent = DiscountPercent,
+			   @PromoIsGlobal = IsGlobal,
+			   @PromoCategoryID = CategoryID
+		from Promocodes
+		where PromoID = @PromoID 
+			and getdate() between ValidFrom and ValidTo;
+	end;
 
 	declare @OrderID int;
 	insert into Orders (UserID, PromoID, StatusID)
 	values (@UserID, @PromoID, (select StatusID from OrderStatuses where StatusCode = 'pending'));
 	set @OrderID = scope_identity();
 
+	-- Р’СЃС‚Р°РІР»СЏРµРј С‚РѕРІР°СЂС‹ РІ Р·Р°РєР°Р· СЃ СѓС‡РµС‚РѕРј РїСЂРѕРјРѕРєРѕРґР° (С‚РѕР»СЊРєРѕ РґР»СЏ РЅСѓР¶РЅРѕР№ РєР°С‚РµРіРѕСЂРёРё РёР»Рё РіР»РѕР±Р°Р»СЊРЅРѕРіРѕ)
 	insert into OrderItems (OrderID, ProductID, Quantity, UnitPrice)
-		select @OrderID, CartItems.ProductID, CartItems.Quantity, dbo.func_GetDiscountedPrice(
-			Products.Price, (select DiscountPercent from Promocodes where PromoID = @PromoID))
-		from CartItems join Products on CartItems.ProductID = Products.ProductID
+		select @OrderID, 
+			   CartItems.ProductID, 
+			   CartItems.Quantity, 
+			   case 
+				   when @PromoID is not null 
+						and (@PromoIsGlobal = 1 or Products.CategoryID = @PromoCategoryID)
+				   then dbo.func_GetDiscountedPrice(Products.Price, @PromoDiscountPercent)
+				   else Products.Price
+			   end as UnitPrice
+		from CartItems 
+		join Products on CartItems.ProductID = Products.ProductID
 		where CartItems.UserID = @UserID;
+
+	-- РЈРјРµРЅСЊС€Р°РµРј РєРѕР»РёС‡РµСЃС‚РІРѕ С‚РѕРІР°СЂРѕРІ РЅР° СЃРєР»Р°РґРµ
+	update Products
+	set StockQuantity = StockQuantity - CartItems.Quantity
+	from Products
+	join CartItems on Products.ProductID = CartItems.ProductID
+	where CartItems.UserID = @UserID;
 	
 	delete from CartItems where UserID = @UserID;
   
@@ -319,7 +354,7 @@ as begin try
 end try
 begin catch
 	rollback transaction;
-	print 'Ошибка: ' + error_message();
+	print 'РћС€РёР±РєР°: ' + error_message();
 end catch
 go
 
@@ -332,7 +367,7 @@ as begin try
 		where UserRoles.UserID = @UserID and Roles.RoleName = 'User'
 	)
 	begin
-		raiserror('Доступ запрещен: только авторизованный пользователь имеет доступ', 16, 1);
+		raiserror('Р”РѕСЃС‚СѓРї Р·Р°РїСЂРµС‰РµРЅ: С‚РѕР»СЊРєРѕ Р°РІС‚РѕСЂРёР·РѕРІР°РЅРЅС‹Р№ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ РёРјРµРµС‚ РґРѕСЃС‚СѓРї', 16, 1);
 		return;
 	end;
 
@@ -350,7 +385,7 @@ as begin try
 	where Orders.UserID = @UserID and Orders.OrderID = @OrderID;
 end try
 begin catch
-	print 'Ошибка: ' + error_message();
+	print 'РћС€РёР±РєР°: ' + error_message();
 end catch
 go
 
@@ -362,7 +397,7 @@ as begin try
 		where UserRoles.UserID = @UserID and Roles.RoleName = 'User'
 	)
 	begin
-		raiserror('Доступ запрещен: только авторизованный пользователь имеет доступ', 16, 1);
+		raiserror('Р”РѕСЃС‚СѓРї Р·Р°РїСЂРµС‰РµРЅ: С‚РѕР»СЊРєРѕ Р°РІС‚РѕСЂРёР·РѕРІР°РЅРЅС‹Р№ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ РёРјРµРµС‚ РґРѕСЃС‚СѓРї', 16, 1);
 		return;
 	end;
 
@@ -372,7 +407,7 @@ as begin try
 	where UserID = @UserID group by Orders.OrderID, OrderStatuses.DisplayName;
 end try
 begin catch
-	print 'Ошибка: ' + error_message();
+	print 'РћС€РёР±РєР°: ' + error_message();
 end catch
 go
 
@@ -384,7 +419,7 @@ as begin try
 		where UserRoles.UserID = @UserID and Roles.RoleName = 'User'
 	)
 	begin
-		raiserror('Доступ запрещен: только авторизованный пользователь имеет доступ', 16, 1);
+		raiserror('Р”РѕСЃС‚СѓРї Р·Р°РїСЂРµС‰РµРЅ: С‚РѕР»СЊРєРѕ Р°РІС‚РѕСЂРёР·РѕРІР°РЅРЅС‹Р№ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ РёРјРµРµС‚ РґРѕСЃС‚СѓРї', 16, 1);
 		return;
 	end;
 
@@ -393,20 +428,19 @@ as begin try
 		Products.ProductID,
         Products.ProductName,
         Products.Description,
+        Categories.CategoryID,
         Categories.CategoryName,
         CartItems.Quantity,
         Products.Price,
-        dbo.func_GetDiscountedPrice(Products.Price, Promocodes.DiscountPercent) AS DiscountedPrice,
+        Products.StockQuantity,
         Products.ImageURL
 	from CartItems
 	join Products on CartItems.ProductID = Products.ProductID
 	join Categories on Categories.CategoryID = Products.CategoryID
-	left join Promocodes on Promocodes.CategoryID = Products.CategoryID
-		and getdate() between Promocodes.ValidFrom and Promocodes.ValidTo
 	where CartItems.UserID = @UserID;
 end try
 begin catch
-	print 'Ошибка: ' + error_message();
+	print 'РћС€РёР±РєР°: ' + error_message();
 end catch
 go
 
@@ -427,7 +461,7 @@ as begin try
 		where UserRoles.UserID = @UserID and Roles.RoleName = 'Admin'
 	)
 	begin
-		raiserror('Доступ запрещен: только администратор может добавлять промокоды', 16, 1);
+		raiserror('Р”РѕСЃС‚СѓРї Р·Р°РїСЂРµС‰РµРЅ: С‚РѕР»СЊРєРѕ Р°РґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂ РјРѕР¶РµС‚ РґРѕР±Р°РІР»СЏС‚СЊ РїСЂРѕРјРѕРєРѕРґС‹', 16, 1);
 		return;
 	end;
 
@@ -435,7 +469,7 @@ as begin try
 		select 1 from Promocodes where Code = @Code
 	)
 	begin
-		raiserror('Данный промокод уже существует', 16, 1);
+		raiserror('Р”Р°РЅРЅС‹Р№ РїСЂРѕРјРѕРєРѕРґ СѓР¶Рµ СЃСѓС‰РµСЃС‚РІСѓРµС‚', 16, 1);
 		return;
 	end;
 
@@ -446,7 +480,8 @@ as begin try
 end try
 begin catch
 	rollback transaction;
-	print 'Ошибка: ' + error_message();
+	declare @ErrorMessage nvarchar(4000) = error_message();
+	raiserror(@ErrorMessage, 16, 1);
 end catch
 go
 
@@ -462,7 +497,7 @@ as begin try
 		where UserRoles.UserID = @UserID and Roles.RoleName = 'Admin'
 	)
 	begin
-		raiserror('Доступ запрещен: только администратор может удалять промокоды', 16, 1);
+		raiserror('Р”РѕСЃС‚СѓРї Р·Р°РїСЂРµС‰РµРЅ: С‚РѕР»СЊРєРѕ Р°РґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂ РјРѕР¶РµС‚ СѓРґР°Р»СЏС‚СЊ РїСЂРѕРјРѕРєРѕРґС‹', 16, 1);
 		return;
 	end;
 
@@ -470,7 +505,7 @@ as begin try
 		select 1 from Promocodes where PromoID = @PromoID
 	)
 	begin
-		raiserror('Данный промокод не существует', 16, 1);
+		raiserror('Р”Р°РЅРЅС‹Р№ РїСЂРѕРјРѕРєРѕРґ РЅРµ СЃСѓС‰РµСЃС‚РІСѓРµС‚', 16, 1);
 		return;
 	end;
 
@@ -480,7 +515,8 @@ as begin try
 end try
 begin catch
 	rollback transaction;
-	print 'Ошибка: ' + error_message();
+	declare @ErrorMessage nvarchar(4000) = error_message();
+	raiserror(@ErrorMessage, 16, 1);
 end catch
 go
 
@@ -492,7 +528,7 @@ as begin try
 	left join Categories c on c.CategoryID = p.CategoryID;
 end try
 begin catch
-	print 'Ошибка: ' + error_message();
+	print 'РћС€РёР±РєР°: ' + error_message();
 end catch
 go
 
@@ -511,7 +547,7 @@ as begin try
 		where UserRoles.UserID = @AdminUserID and Roles.RoleName = 'Admin'
 	)
 	begin
-		raiserror('Доступ запрещен: только администратор может назначать роли', 16, 1);
+		raiserror('Р”РѕСЃС‚СѓРї Р·Р°РїСЂРµС‰РµРЅ: С‚РѕР»СЊРєРѕ Р°РґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂ РјРѕР¶РµС‚ РЅР°Р·РЅР°С‡Р°С‚СЊ СЂРѕР»Рё', 16, 1);
 		rollback transaction;
 		return;
 	end;
@@ -529,7 +565,7 @@ as begin try
 end try
 begin catch
 	rollback transaction;
-	print 'Ошибка: ' + error_message();
+	print 'РћС€РёР±РєР°: ' + error_message();
 end catch
 go
 
@@ -554,7 +590,7 @@ as begin try
 end try
 begin catch
 	rollback transaction;
-	print 'Ошибка: ' + error_message();
+	print 'РћС€РёР±РєР°: ' + error_message();
 end catch
 go
 
@@ -570,7 +606,7 @@ as begin try
     where u.Username = @Username and u.PasswordHash = @PasswordHash;
 end try
 begin catch
-	print 'Ошибка: ' + error_message();
+	print 'РћС€РёР±РєР°: ' + error_message();
 end catch
 go
 
@@ -579,17 +615,17 @@ as begin try
 	select CategoryID, CategoryName from Categories order by CategoryName;
 end try
 begin catch
-	print 'Ошибка: ' + error_message();
+	print 'РћС€РёР±РєР°: ' + error_message();
 end catch
 go
 
 create or alter procedure GetCategoryIdByName
 	@CategoryName nvarchar(200)
 as begin try
-	select CategoryId from Categories where CategoryName = @CategoryName;
+	select CategoryID from Categories where CategoryName = @CategoryName;
 end try
 begin catch
-	print 'Ошибка: ' + error_message();
+	print 'РћС€РёР±РєР°: ' + error_message();
 end catch
 go
 
@@ -600,7 +636,7 @@ as begin try
 	where Code = @Code and getdate() between ValidFrom and ValidTo;
 end try
 begin catch
-	print 'Ошибка: ' + error_message();
+	print 'РћС€РёР±РєР°: ' + error_message();
 end catch
 go
 
@@ -615,7 +651,7 @@ as begin try
         where ur.UserID = @UserID and r.RoleName = 'User'
     )
 	begin
-		raiserror('Доступ запрещен: только авторизованный пользователь имеет доступ к корзине', 16, 1);
+		raiserror('Р”РѕСЃС‚СѓРї Р·Р°РїСЂРµС‰РµРЅ: С‚РѕР»СЊРєРѕ Р°РІС‚РѕСЂРёР·РѕРІР°РЅРЅС‹Р№ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ РёРјРµРµС‚ РґРѕСЃС‚СѓРї Рє РєРѕСЂР·РёРЅРµ', 16, 1);
         return;
     end
 
@@ -630,7 +666,7 @@ as begin try
 	where UserID = @UserID and ProductID = @ProductID;
 end try
 begin catch
-	print 'Ошибка: ' + error_message();
+	print 'РћС€РёР±РєР°: ' + error_message();
 end catch
 go
 
@@ -645,7 +681,7 @@ as begin try
         where ur.UserID = @UserID and r.RoleName = 'User'
     )
     begin
-        raiserror('Доступ запрещен', 16, 1);
+        raiserror('Р”РѕСЃС‚СѓРї Р·Р°РїСЂРµС‰РµРЅ', 16, 1);
         return;
     end
 
@@ -662,7 +698,7 @@ as begin try
 		insert into CartItems(UserID, ProductID, Quantity) values(@UserID, @ProductID, @Quantity);
 end try
 begin catch
-	print 'Ошибка: ' + error_message();
+	print 'РћС€РёР±РєР°: ' + error_message();
 end catch
 go
 
@@ -677,7 +713,7 @@ as begin try
 	begin
 		if not exists(select 1 from Users where UserID = @UserID and PasswordHash = @PasswordHash)
 		begin
-			raiserror('Неверные учетные данные', 16, 1);
+			raiserror('РќРµРІРµСЂРЅС‹Рµ СѓС‡РµС‚РЅС‹Рµ РґР°РЅРЅС‹Рµ', 16, 1);
 			rollback transaction;
 			return;
 		end
@@ -693,7 +729,7 @@ as begin try
 	commit transaction;
 end try
 begin catch
-	print 'Ошибка: ' + error_message();
+	print 'РћС€РёР±РєР°: ' + error_message();
 end catch
 go
 
@@ -706,14 +742,14 @@ as begin try
 		where UserRoles.UserID = @UserID and Roles.RoleName = 'Admin'
 	)
 	begin
-		raiserror('Доступ запрещен: только администратор может добавлять товары', 16, 1);
+		raiserror('Р”РѕСЃС‚СѓРї Р·Р°РїСЂРµС‰РµРЅ: РґРѕСЃС‚СѓРї РёРјРµРµС‚ С‚РѕР»СЊРєРѕ Р°РґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂ', 16, 1);
 		return;
 	end;
 
 	select * from Logs;
 end try
 begin catch
-	print 'Ошибка: ' + error_message();
+	print 'РћС€РёР±РєР°: ' + error_message();
 end catch
 go
 
@@ -726,14 +762,14 @@ as begin try
 		where UserRoles.UserID = @UserID and Roles.RoleName = 'Admin'
 	)
 	begin
-		raiserror('Доступ запрещен: только администратор может добавлять товары', 16, 1);
+		raiserror('Р”РѕСЃС‚СѓРї Р·Р°РїСЂРµС‰РµРЅ: РґРѕСЃС‚СѓРї РёРјРµРµС‚ С‚РѕР»СЊРєРѕ Р°РґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂ', 16, 1);
 		return;
 	end;
 
 	delete from Logs;
 end try
 begin catch
-	print 'Ошибка: ' + error_message();
+	print 'РћС€РёР±РєР°: ' + error_message();
 end catch
 go
 
@@ -742,7 +778,7 @@ create or alter procedure GetProductsPaged
 	@PageSize int
 as begin try
 	if @PageNumber is null or @PageNumber < 1 set @PageNumber = 1;
-    if @PageSize is null or @PageSize < 1 set @PageSize = 50;
+    if @PageSize is null or @PageSize < 1 set @PageSize = 52;
 
 	select 
 		p.ProductID,
@@ -762,6 +798,7 @@ as begin try
 	fetch next @PageSize rows only;
 end try
 begin catch
-	print 'Ошибка: ' + error_message();
+	print 'РћС€РёР±РєР°: ' + error_message();
+
 end catch
 go

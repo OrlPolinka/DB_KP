@@ -40,5 +40,6 @@ go
 
 
 
+select * from Products;
 
-
+select * from Promocodes;

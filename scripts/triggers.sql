@@ -1,5 +1,5 @@
 
-create trigger trig_Products on Products after insert, update, delete
+create or alter trigger trig_Products on Products after insert, update, delete
 as declare @UserID int,
 		   @ins int = (select count(*) from inserted),
 		   @del int = (select count(*) from deleted),
@@ -20,14 +20,14 @@ begin
 	if @ins > 0 and @del = 0
 	begin
 		select top 1 @info = ProductName + ' ' + cast(price as nvarchar(20)) + ' ' + cast(StockQuantity as nvarchar(20)) from inserted;
-		insert into Logs(UserID, Action) values (@UserID, 'Добавлен товар: ' + @info);
+		insert into Logs(UserID, Action) values (@UserID, 'Insert product: ' + @info);
 	end;
 
 	--delete
 	if @ins = 0 and @del > 0
 	begin
 		select top 1 @info = ProductName + ' ' + cast(price as nvarchar(20)) + ' ' + cast(StockQuantity as nvarchar(20)) from deleted;
-		insert into Logs(UserID, Action) values (@UserID, 'Удален товар: ' + @info);
+		insert into Logs(UserID, Action) values (@UserID, 'Delete product: ' + @info);
 	end;
 
 	--update
@@ -39,14 +39,14 @@ begin
 		select top 1 @new = ProductName + ' ' + cast(price as nvarchar(20)) + ' ' + cast(StockQuantity as nvarchar(20)) from inserted;
 		select top 1 @old = ProductName + ' ' + cast(price as nvarchar(20)) + ' ' + cast(StockQuantity as nvarchar(20)) from deleted;
 
-		insert into Logs(UserID, Action) values (@UserID, 'Обновлен товар: ' + @old + ' -> ' + @new);
+		insert into Logs(UserID, Action) values (@UserID, 'Update product: ' + @old + ' -> ' + @new);
 	end;
 end;
 go
 
 
 
-create trigger trig_Promocodes on Promocodes after insert, delete
+create or alter trigger trig_Promocodes on Promocodes after insert, delete
 as declare @UserID int,
 		   @ins int = (select count(*) from inserted),
 		   @del int = (select count(*) from deleted),
@@ -67,14 +67,14 @@ begin
 	if @ins > 0 and @del = 0
 	begin
 		select top 1 @info = Code + ' ' + cast(DiscountPercent as nvarchar(20)) + '%' from inserted;
-		insert into Logs(UserID, Action) values (@UserID, 'Добавлен промокод: ' + @info);
+		insert into Logs(UserID, Action) values (@UserID, 'Insert promocode: ' + @info);
 	end;
 
 	--delete
 	if @ins = 0 and @del > 0
 	begin
 		select top 1 @info = Code + ' ' + cast(DiscountPercent as nvarchar(20)) + '%' from deleted;
-		insert into Logs(UserID, Action) values (@UserID, 'Удален промокод: ' + @info);
+		insert into Logs(UserID, Action) values (@UserID, 'Delete promocode: ' + @info);
 	end;
 end;
 go

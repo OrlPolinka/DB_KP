@@ -54,7 +54,7 @@ begin
     set @CategoryID = ((@i % 10) + 1);
     set @Price = round(rand() * 100 + 10, 2);
     set @StockQuantity = (@i % 200) + 1;
-    set @ImageURL = 'C:\Users\user\Desktop\λκ, ύκη\αδ\3 κσπρ\κο\DB_KP\images\Jacket.jpg';
+    set @ImageURL = '/images/Jacket.jpg';
 
     exec AddProduct 
         @UserID = 1,
@@ -67,6 +67,7 @@ begin
 
     set @i = @i + 1;
 end;
+
 
 
 -------------------------------------------------------------
@@ -184,6 +185,7 @@ DBCC CHECKIDENT ('OrderItems', RESEED, 0);
 DBCC CHECKIDENT ('Favorites', RESEED, 0);
 DBCC CHECKIDENT ('CartItems', RESEED, 0);
 DBCC CHECKIDENT ('Users', RESEED, 0);
+DBCC CHECKIDENT ('Logs', RESEED, 0);
 
 select * from Categories;
 select * from Products;

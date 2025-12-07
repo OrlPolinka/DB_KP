@@ -20,10 +20,13 @@ export type CartItem = {
   ProductID: number;
   ProductName: string;
   Description: string;
+  CategoryID?: number;
   CategoryName: string;
   Quantity: number;
   Price: number;
+  StockQuantity?: number;
   DiscountedPrice?: number;
+  DiscountPercent?: number;
   ImageURL?: string;
 };
 

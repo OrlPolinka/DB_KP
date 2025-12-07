@@ -85,16 +85,43 @@ export default function CartPage() {
     }
   };
 
-  const total = items.reduce((s, i) => s + (i.DiscountedPrice ?? i.Price) * i.Quantity, 0);
+  // Вычисляем скидку на основе выбранного промокода
+  const selectedPromo = promocodes.find(p => p.Code === promo);
+  
+  const getItemPrice = (item: CartItem) => {
+    if (!selectedPromo) return item.Price;
+    
+    // Проверяем, применяется ли промокод к этому товару
+    // Глобальный промокод применяется ко всем товарам
+    // Промокод по категории применяется только к товарам этой категории
+    const appliesToItem = selectedPromo.IsGlobal || 
+      (selectedPromo.CategoryName && item.CategoryName === selectedPromo.CategoryName);
+    
+    if (appliesToItem) {
+      return item.Price * (1 - selectedPromo.DiscountPercent / 100);
+    }
+    return item.Price;
+  };
+  
+  const total = items.reduce((s, i) => s + getItemPrice(i) * i.Quantity, 0);
 
   const order = async () => {
+    // Проверка наличия товаров на складе
+    const outOfStock = items.filter(i => (i.StockQuantity ?? 0) < i.Quantity);
+    if (outOfStock.length > 0) {
+      const productNames = outOfStock.map(i => i.ProductName).join(', ');
+      alert(`Товара нет на складе: ${productNames}`);
+      return;
+    }
+
     try {
       await OrdersAPI.create(promo || undefined);
       alert('Заказ оформлен');
       setPromo('');
       load();
     } catch (e: any) {
-      alert(e.response?.data?.error ?? 'Ошибка оформления');
+      const errorMsg = e.response?.data?.error ?? 'Ошибка оформления';
+      alert(errorMsg);
     }
   };
 
@@ -151,12 +178,48 @@ export default function CartPage() {
               <h3 style={{ marginBottom: 'var(--spacing-xs)', cursor: 'pointer' }}>{i.ProductName}</h3>
             </Link>
             <p className="text-muted" style={{ marginBottom: 'var(--spacing-sm)' }}>{i.CategoryName}</p>
-            <p style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: 'var(--spacing-sm)' }}>
-              {i.Quantity} × {(i.DiscountedPrice ?? i.Price).toFixed(2)} = 
-              <span style={{ color: 'var(--color-primary)' }}>
-                {' '}{((i.DiscountedPrice ?? i.Price) * i.Quantity).toFixed(2)}
-              </span>
-            </p>
+            {i.StockQuantity !== undefined && (
+              <p style={{ 
+                marginBottom: 'var(--spacing-xs)', 
+                color: i.StockQuantity < i.Quantity ? 'var(--color-error)' : 'var(--color-text)',
+                fontWeight: i.StockQuantity < i.Quantity ? 'bold' : 'normal'
+              }}>
+                На складе: {i.StockQuantity} {i.StockQuantity < i.Quantity && '(недостаточно)'}
+              </p>
+            )}
+            {(() => {
+              const itemPrice = getItemPrice(i);
+              const hasDiscount = selectedPromo && itemPrice < i.Price;
+              return (
+                <>
+                  {hasDiscount && (
+                    <p style={{ 
+                      marginBottom: 'var(--spacing-xs)', 
+                      color: 'var(--color-success)',
+                      fontWeight: 'bold'
+                    }}>
+                      🎉 Акция! Скидка {selectedPromo.DiscountPercent}%
+                    </p>
+                  )}
+                  <p style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: 'var(--spacing-sm)' }}>
+                    {i.Quantity} × {itemPrice.toFixed(2)} = 
+                    <span style={{ color: 'var(--color-primary)' }}>
+                      {' '}{(itemPrice * i.Quantity).toFixed(2)}
+                    </span>
+                    {hasDiscount && (
+                      <span style={{ 
+                        textDecoration: 'line-through', 
+                        color: 'var(--color-text-light)', 
+                        fontSize: '0.9rem',
+                        marginLeft: 'var(--spacing-xs)'
+                      }}>
+                        {(i.Price * i.Quantity).toFixed(2)}
+                      </span>
+                    )}
+                  </p>
+                </>
+              );
+            })()}
             <div className="flex gap-sm" style={{ flexWrap: 'wrap', alignItems: 'center' }}>
               <button onClick={() => dec(i.ProductID, i.Quantity)}>-</button>
               <input 
@@ -188,11 +251,21 @@ export default function CartPage() {
                 style={{ flex: 1, minWidth: 200 }}
               >
                 <option value="">Выберите промокод</option>
-                {promocodes.map(p => (
-                  <option key={p.PromoID} value={p.Code}>
-                    {p.Code} ({p.DiscountPercent}% скидка{p.CategoryName ? ` на ${p.CategoryName}` : ''})
-                  </option>
-                ))}
+                {promocodes
+                  .filter(p => {
+                    // Показываем только активные промокоды
+                    const now = new Date();
+                    const validFrom = p.ValidFrom ? new Date(p.ValidFrom) : null;
+                    const validTo = p.ValidTo ? new Date(p.ValidTo) : null;
+                    if (validFrom && now < validFrom) return false;
+                    if (validTo && now > validTo) return false;
+                    return true;
+                  })
+                  .map(p => (
+                    <option key={p.PromoID} value={p.Code}>
+                      {p.Code} ({p.DiscountPercent}% скидка{p.CategoryName ? ` на ${p.CategoryName}` : ' глобальная'})
+                    </option>
+                  ))}
               </select>
               <button onClick={order} style={{ padding: 'var(--spacing-md)', fontSize: '1.1rem' }}>
                 Оформить заказ

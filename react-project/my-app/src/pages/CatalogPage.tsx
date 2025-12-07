@@ -12,7 +12,7 @@ export default function CatalogPage() {
   const [loading, setLoading] = useState(false);
   const [isTop100, setIsTop100] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const pageSize = 50;
+  const pageSize = 52;
 
   const loadPage = async (pageNum: number = page) => {
     try {
@@ -68,9 +68,12 @@ export default function CatalogPage() {
     try {
       setLoading(true);
       setError(null);
+      console.log('Загрузка топ-100...');
       const r = await ProductsAPI.top100();
+      console.log('Ответ топ-100:', r);
       const data = r.data || [];
       const products = Array.isArray(data) ? data : [];
+      console.log('Товаров получено:', products.length);
       setItems(products);
       setIsTop100(true);
       setQ('');
@@ -157,24 +160,31 @@ export default function CatalogPage() {
       {!loading && items.length > 0 && (
         <div className="grid grid-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))' }}>
           {items.map(p => (
-            <ProductCard key={p.ProductID} p={p} onAction={() => {
-              if (isTop100) top();
-              else if (q) search();
-              else if (catName) byCategory(catName);
-              else loadPage(page);
-            }} />
+            <ProductCard key={p.ProductID} p={p} />
           ))}
         </div>
       )}
 
       {/* Пагинация - показываем только если не топ-100 и не поиск/категория */}
       {!isTop100 && !q && !catName && !loading && items.length > 0 && (
-        <div className="flex gap-md mt-lg items-center">
-          <button disabled={page === 1} onClick={() => setPage(p => Math.max(1, p - 1))}>
+        <div className="flex gap-md mt-lg items-center" style={{ 
+          justifyContent: 'space-between', 
+          width: '100%',
+          padding: 'var(--spacing-md) 0'
+        }}>
+          <button 
+            disabled={page === 1} 
+            onClick={() => setPage(p => Math.max(1, p - 1))}
+            style={{ flex: '0 0 auto' }}
+          >
             ← Назад
           </button>
-          <span>Страница {page}</span>
-          <button disabled={items.length < pageSize} onClick={() => setPage(p => p + 1)}>
+          <span style={{ flex: '0 0 auto' }}>Страница {page}</span>
+          <button 
+            disabled={items.length < pageSize} 
+            onClick={() => setPage(p => p + 1)}
+            style={{ flex: '0 0 auto' }}
+          >
             Вперёд →
           </button>
         </div>

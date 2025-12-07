@@ -46,6 +46,10 @@ export default function FavoritesPage() {
   };
 
   const addToCart = async (p: Product) => {
+    if (p.StockQuantity <= 0) {
+      alert('Товара нет на складе');
+      return;
+    }
     try {
       await CartAPI.addDelta(p.ProductID, 1);
       alert('Добавлено в корзину');
@@ -84,6 +88,14 @@ export default function FavoritesPage() {
             )}
             <h3 style={{ marginBottom: 'var(--spacing-xs)' }}>{p.ProductName}</h3>
             <p className="text-muted">{p.CategoryName}</p>
+            <p style={{ 
+              marginBottom: 'var(--spacing-xs)', 
+              color: p.StockQuantity > 0 ? 'var(--color-success)' : 'var(--color-error)',
+              fontWeight: 'bold',
+              fontSize: '0.9rem'
+            }}>
+              {p.StockQuantity > 0 ? `В наличии (${p.StockQuantity} шт.)` : 'Нет в наличии'}
+            </p>
             <p style={{ fontSize: '1.25rem', fontWeight: 'bold', margin: 'var(--spacing-sm) 0' }}>
               {(p.DiscountedPrice ?? p.Price).toFixed(2)}
             </p>
@@ -97,9 +109,11 @@ export default function FavoritesPage() {
               </Link>
               <button 
                 onClick={() => addToCart(p)}
+                disabled={p.StockQuantity <= 0}
                 style={{ flex: 1 }}
+                title={p.StockQuantity <= 0 ? 'Товара нет на складе' : ''}
               >
-                В корзину
+                {p.StockQuantity <= 0 ? 'Нет в наличии' : 'В корзину'}
               </button>
               <button 
                 onClick={() => remove(p.ProductID)} 

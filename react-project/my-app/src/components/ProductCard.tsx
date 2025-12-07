@@ -13,9 +13,13 @@ export default function ProductCard({ p, onAction }: Props) {
       alert('Необходимо войти в систему');
       return;
     }
+    if (p.StockQuantity <= 0) {
+      alert('Товара нет на складе');
+      return;
+    }
     try {
       await CartAPI.addDelta(p.ProductID, 1);
-      onAction?.();
+      // Не вызываем onAction, чтобы страница не перезагружалась
     } catch (e: any) {
       alert(e.response?.data?.error ?? 'Ошибка добавления в корзину');
     }
@@ -28,7 +32,7 @@ export default function ProductCard({ p, onAction }: Props) {
     }
     try {
       await FavoritesAPI.add(p.ProductID);
-      onAction?.();
+      // Не вызываем onAction, чтобы страница не перезагружалась
     } catch (e: any) {
       alert(e.response?.data?.error ?? 'Ошибка добавления в избранное');
     }
@@ -44,10 +48,25 @@ export default function ProductCard({ p, onAction }: Props) {
         {p.Description}
       </p>
       <p className="text-muted">Категория: {p.CategoryName ?? p.CategoryID}</p>
+      <p style={{ 
+        marginBottom: 'var(--spacing-xs)', 
+        color: p.StockQuantity > 0 ? 'var(--color-success)' : 'var(--color-error)',
+        fontWeight: 'bold',
+        fontSize: '0.9rem'
+      }}>
+        {p.StockQuantity > 0 ? `В наличии (${p.StockQuantity} шт.)` : 'Нет в наличии'}
+      </p>
       <p><strong>Цена: {(p.DiscountedPrice ?? p.Price).toFixed(2)}</strong></p>
       <div className="flex gap-sm" style={{ flexWrap: 'wrap' }}>
         <Link to={`/product/${p.ProductID}`} className="badge badge-primary">Подробнее</Link>
-        <button onClick={addToCart} style={{ flex: 1 }}>В корзину</button>
+        <button 
+          onClick={addToCart} 
+          disabled={p.StockQuantity <= 0}
+          style={{ flex: 1 }}
+          title={p.StockQuantity <= 0 ? 'Товара нет на складе' : ''}
+        >
+          {p.StockQuantity <= 0 ? 'Нет в наличии' : 'В корзину'}
+        </button>
         <button onClick={addToFav} className="secondary" style={{ flex: 1 }}>В избранное</button>
       </div>
     </div>

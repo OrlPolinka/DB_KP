@@ -16,7 +16,7 @@ exec AddProduct
     @CategoryID = 1,
     @Price = 199.99,
     @StockQuantity = 50,
-    @ImageURL = 'C:\Users\user\Desktop\λκ, ύκη\αδ\3 κσπρ\κο\DB_KP\images\Jacket.jpg';
+    @ImageURL = '/images/Jacket.jpg';
 
 exec GetProducts;
 
@@ -30,13 +30,13 @@ exec UpdateProduct
     @CategoryID = 2,
     @Price = 179.99,
     @StockQuantity = 40,
-    @ImageURL = 'C:\Users\user\Desktop\λκ, ύκη\αδ\3 κσπρ\κο\DB_KP\images\jacket_new.jpg';
+    @ImageURL = '/images/Jacket.jpg';
 
 exec GetProducts;
 
 
 -----------------------------------
-exec DeleteProduct @UserID = 1, @ProductID = 11;
+exec DeleteProduct @UserID = 1, @ProductID = 100002;
 
 exec GetProducts;
 
@@ -57,7 +57,7 @@ exec AddPromocode
 exec GetPromocodes;
 
 -----------------------------------
-exec DeletePromocode @UserID = 1, @PromoID = 32;
+exec DeletePromocode @UserID = 1, @PromoID = 14;
 
 exec GetPromocodes;
 

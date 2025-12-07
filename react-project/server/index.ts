@@ -18,7 +18,6 @@ app.use(express.json({ limit: '2mb' }));
 
 app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
 
-app.use(bodyParser.json());
 app.use('/', routes);
 app.use('/images', express.static('C:/Users/user/Desktop/лк, экз/бд/3 курс/кп/DB_KP/images'));
 

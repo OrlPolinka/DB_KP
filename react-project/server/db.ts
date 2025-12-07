@@ -16,7 +16,7 @@ const config: sql.config = {
     enableArithAbort: true,
     requestTimeout: 30000,
   },
-  pool: { max: 10, min: 0, idleTimeoutMillis: 30000 }
+  pool: { max: 10, min: 0, idleTimeoutMillis: 600000 }
 };
 
 let poolPromise: Promise<sql.ConnectionPool>;

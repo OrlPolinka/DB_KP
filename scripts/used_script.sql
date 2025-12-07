@@ -57,7 +57,7 @@ exec AddPromocode
 exec GetPromocodes;
 
 -----------------------------------
-exec DeletePromocode @UserID = 1, @PromoID = 14;
+exec DeletePromocode @UserID = 1, @PromoID = 16;
 
 exec GetPromocodes;
 
@@ -83,7 +83,7 @@ set context_info @bin;
 ------------------------------------------
 exec SearchProducts @Keyword = 'Jacket';
 exec GetProductDetails @ProductId = 9;
-exec FilterSearchProducts @CategoryID = 1;
+exec FilterSearchProducts @CategoryID = 3;
 
 exec GetCategories;
 exec GetCategoryIdByName @CategoryName = 'Category_1';
@@ -146,3 +146,6 @@ from openrowset(
 ) as j;
 
 exec ImportLogsFromJSON @JsonData = @json;
+
+
+

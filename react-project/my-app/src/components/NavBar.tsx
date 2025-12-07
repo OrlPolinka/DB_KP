@@ -39,10 +39,13 @@ useEffect(() => {
       <Link to="/orders">Мои заказы</Link>
       {user?.RoleName === 'Admin' && <Link to="/admin">Админка</Link>}
       {user?.RoleName === 'Admin' && <Link to="/admin/logs">Лог</Link>}
-      <div style={{ marginLeft: 'auto' }}>
+      <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
         {user ? (
           <>
             <span>Привет, {user.Username} ({user.RoleName})</span>{' '}
+            <Link to="/auth" style={{ color: '#d32f2f', textDecoration: 'none' }}>
+              Удалить аккаунт
+            </Link>{' '}
             <button onClick={logout}>Выйти</button>
           </>
         ) : (

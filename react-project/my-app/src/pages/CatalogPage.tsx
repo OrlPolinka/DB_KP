@@ -7,11 +7,11 @@ import CategorySelect from '../components/CategorySelect';
 export default function CatalogPage() {
   const [items, setItems] = useState<Product[]>([]);
   const [q, setQ] = useState('');
-  const [catName, setCatName] = useState<string>('');
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [isTop100, setIsTop100] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [catId, setCatId] = useState<number | null>(null);
   const pageSize = 52;
 
   const loadPage = async (pageNum: number = page) => {
@@ -32,10 +32,10 @@ export default function CatalogPage() {
   };
 
   useEffect(() => {
-    if (!isTop100 && !q && !catName) {
-      loadPage(page);
-    }
-  }, [page]);
+  if (!isTop100 && !q && !catId) {
+    loadPage(page);
+  }
+}, [page, isTop100, q, catId]);
 
   const search = async () => {
     if (!q.trim()) {
@@ -77,7 +77,7 @@ export default function CatalogPage() {
       setItems(products);
       setIsTop100(true);
       setQ('');
-      setCatName('');
+      setCatId(null);
       setPage(1);
       if (products.length === 0) {
         setError('Товары не найдены');
@@ -92,27 +92,37 @@ export default function CatalogPage() {
     }
   };
 
-  const byCategory = async (name: string) => {
-    setCatName(name);
+  const byCategory = async (id: number) => {
+    setCatId(id);
     setQ('');
     setIsTop100(false);
-    if (!name) {
+    if (!id || id === 0) {
       loadPage(1);
       return;
     }
+    
+    const categoryIdNum = Number(id);
+    if (!Number.isFinite(categoryIdNum) || categoryIdNum <= 0) {
+      console.error('Невалидный categoryId:', id);
+      setError('Неверный ID категории');
+      setItems([]);
+      return;
+    }
+
     try {
       setLoading(true);
-      setError(null);
-      const r = await ProductsAPI.byCategoryPaged({ categoryName: name, page: 1, size: pageSize });
+      console.log('Запрос товаров по категории:', categoryIdNum);
+      const r = await ProductsAPI.byCategoryPaged({ categoryId: categoryIdNum, page: 1, size: pageSize });
       const data = r.data || [];
       const products = Array.isArray(data) ? data : [];
+      console.log('Получено товаров:', products.length);
       setItems(products);
       setPage(1);
       if (products.length === 0) {
-        setError('Товары не найдены');
+        setError(null); // Не показываем ошибку, если просто нет товаров
       }
     } catch (e: any) {
-      console.error('Ошибка фильтрации:', e);
+      console.error('Ошибка фильтрации по категории:', e);
       const errorMsg = e.response?.data?.error || e.message || 'Ошибка фильтрации';
       setError('Ошибка фильтрации: ' + errorMsg);
       setItems([]);
@@ -120,6 +130,7 @@ export default function CatalogPage() {
       setLoading(false);
     }
   };
+
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
@@ -134,7 +145,7 @@ export default function CatalogPage() {
         <button onClick={() => { 
           setPage(1); 
           setQ(''); 
-          setCatName(''); 
+          setCatId(null); 
           setIsTop100(false); 
           setError(null);
           loadPage(1); 
@@ -150,7 +161,8 @@ export default function CatalogPage() {
           style={{ flex: 1, minWidth: 200 }}
         />
         <button onClick={search}>Найти</button>
-        <CategorySelect value={catName} onChange={byCategory} />
+        <CategorySelect value={catId ?? undefined} onChange={byCategory} />
+
       </div>
       
       {loading && <p>Загрузка...</p>}
@@ -166,7 +178,7 @@ export default function CatalogPage() {
       )}
 
       {/* Пагинация - показываем только если не топ-100 и не поиск/категория */}
-      {!isTop100 && !q && !catName && !loading && items.length > 0 && (
+      {!isTop100 && !q && !catId && !loading && items.length > 0 && (
         <div className="flex gap-md mt-lg items-center" style={{ 
           justifyContent: 'space-between', 
           width: '100%',

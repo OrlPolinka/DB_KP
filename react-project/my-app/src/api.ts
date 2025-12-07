@@ -44,16 +44,15 @@ export const ProductsAPI = {
   top100: () => api.get('/products/top100'),
   byId: (id: number) => api.get(`/products/${id}`),
   search: (q: string) => api.get('/products/search', { params: { q } }),
-  byCategory: (params: { categoryId?: number; categoryName?: string }) =>
-    api.get('/products/by-category', { params }),
   listPaged: (page: number, size: number) =>
     api.get('/products/paged', { params: { page, size } }),
 
   searchPaged: (q: string, page: number, size: number) =>
     api.get('/products/search-paged', { params: { q, page, size } }),
 
-  byCategoryPaged: (params: { categoryId?: number; categoryName?: string; page: number; size: number }) =>
-    api.get('/products/by-category-paged', { params }),
+  byCategoryPaged: (params: { categoryId: number; page: number; size: number }) =>
+  api.get('/products/by-category-paged', { params }),
+
 };
 
 // Categories

@@ -36,21 +36,32 @@ export default function AuthPage() {
   };
 
   const deleteOwn = async () => {
+    if (!confirm('Вы уверены, что хотите удалить свою учетную запись? Это действие необратимо и приведет к удалению всех ваших данных (заказы, избранное, корзина).')) {
+      return;
+    }
+
+    if (!password.trim()) {
+      alert('Для удаления аккаунта необходимо ввести пароль');
+      return;
+    }
+
     try {
-      await AuthAPI.deleteOwn(password || undefined);
+      await AuthAPI.deleteOwn(password);
       clearAuth();
-      alert('Учетная запись удалена');
+      alert('Учетная запись успешно удалена');
       nav('/');
       window.dispatchEvent(new Event('storage'));
     } catch (e: any) {
-      alert(e.response?.data?.error ?? 'Ошибка удаления аккаунта');
+      const errorMsg = e.response?.data?.error || e.message || 'Ошибка удаления аккаунта';
+      alert('Ошибка: ' + errorMsg);
     }
   };
 
   return (
     <div>
-      <h2>{mode === 'login' ? 'Вход' : 'Регистрация'}</h2>
-      {!current && (
+      {!current ? (
+        <>
+          <h2>{mode === 'login' ? 'Вход' : 'Регистрация'}</h2>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxWidth: 320 }}>
           <input placeholder="Логин" value={username} onChange={e => setUsername(e.target.value)} />
           {mode === 'register' && <input placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} />}
@@ -62,17 +73,64 @@ export default function AuthPage() {
             </button>
           </div>
         </div>
-      )}
-      {current && (
-        <div style={{ maxWidth: 320, marginTop: 16 }}>
-          <h3>Удаление учетной записи</h3>
-          <p>Введи пароль и подтверди удаление.</p>
-          <input type="password" placeholder="Пароль" value={password} onChange={e => setPassword(e.target.value)} />
-          <label style={{ display: 'block', marginTop: 8 }}>
-            <input type="checkbox" checked={confirmDelete} onChange={e => setConfirmDelete(e.target.checked)} /> Подтверждаю удаление
+        </>
+      ) : (
+        <>
+          <h2>Удаление учетной записи</h2>
+          <div className="card" style={{ maxWidth: 400, marginTop: 24 }}>
+          <div style={{ 
+            padding: 16, 
+            backgroundColor: '#ffebee', 
+            borderRadius: 4, 
+            marginBottom: 16,
+            border: '1px solid #ffcdd2'
+          }}>
+            <p style={{ margin: 0, color: '#c62828', fontWeight: 'bold' }}>
+              ⚠️ Внимание! Это действие необратимо.
+            </p>
+            <p style={{ margin: '8px 0 0 0', fontSize: '14px', color: '#d32f2f' }}>
+              При удалении аккаунта будут удалены все ваши данные:
+            </p>
+            <ul style={{ margin: '8px 0 0 20px', fontSize: '14px', color: '#d32f2f' }}>
+              <li>История заказов</li>
+              <li>Избранные товары</li>
+              <li>Корзина</li>
+              <li>Все настройки аккаунта</li>
+            </ul>
+          </div>
+          <div className="form-group">
+            <label>Введите пароль для подтверждения:</label>
+            <input 
+              type="password" 
+              placeholder="Пароль" 
+              value={password} 
+              onChange={e => setPassword(e.target.value)}
+              style={{ width: '100%' }}
+            />
+          </div>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+            <input 
+              type="checkbox" 
+              checked={confirmDelete} 
+              onChange={e => setConfirmDelete(e.target.checked)} 
+            /> 
+            <span>Я понимаю последствия и подтверждаю удаление аккаунта</span>
           </label>
-          <button disabled={!confirmDelete} onClick={deleteOwn} style={{ marginTop: 8 }}>Удалить учетную запись</button>
-        </div>
+          <button 
+            disabled={!confirmDelete || !password.trim()} 
+            onClick={deleteOwn} 
+            className="danger"
+            style={{ 
+              width: '100%',
+              padding: '12px',
+              fontSize: '16px',
+              fontWeight: 'bold'
+            }}
+          >
+            Удалить учетную запись
+          </button>
+          </div>
+        </>
       )}
     </div>
   );

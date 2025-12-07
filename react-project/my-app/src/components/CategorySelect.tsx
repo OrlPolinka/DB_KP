@@ -3,8 +3,8 @@ import { CategoriesAPI } from '../api';
 import type { Category } from '../types';
 
 type Props = {
-  value?: string;
-  onChange: (name: string) => void;
+  value?: number;
+  onChange: (id: number) => void;
 };
 
 export default function CategorySelect({ value, onChange }: Props) {
@@ -13,10 +13,10 @@ export default function CategorySelect({ value, onChange }: Props) {
     CategoriesAPI.list().then(r => setCats(r.data));
   }, []);
   return (
-    <select value={value ?? ''} onChange={e => onChange(e.target.value)}>
-      <option value="">Все категории</option>
+    <select value={value ?? 0} onChange={e => onChange(Number(e.target.value))}>
+      <option value={0}>Все категории</option>
       {cats.map(c => (
-        <option key={c.CategoryID} value={c.CategoryName}>{c.CategoryName}</option>
+        <option key={c.CategoryID} value={c.CategoryID}>{c.CategoryName}</option>
       ))}
     </select>
   );

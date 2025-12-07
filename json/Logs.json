@@ -1,5 +1,89 @@
 ﻿[
   {
+    "LogID": 20,
+    "UserID": 1,
+    "Action": "Delete promocode: New promo 25%",
+    "Timestamp": "2025-12-07T22:22:11"
+  },
+  {
+    "LogID": 19,
+    "UserID": 1,
+    "Action": "Insert promocode: New promo 25%",
+    "Timestamp": "2025-12-07T22:21:54.377"
+  },
+  {
+    "LogID": 18,
+    "UserID": 1,
+    "Action": "Delete product: Jince 92.00 56",
+    "Timestamp": "2025-12-07T22:21:03.773"
+  },
+  {
+    "LogID": 17,
+    "UserID": 1,
+    "Action": "Update product: Jence 82.00 12 -> Jince 92.00 56",
+    "Timestamp": "2025-12-07T22:20:50.477"
+  },
+  {
+    "LogID": 16,
+    "UserID": 1,
+    "Action": "Insert product: Jence 82.00 12",
+    "Timestamp": "2025-12-07T22:19:47.453"
+  },
+  {
+    "LogID": 15,
+    "UserID": 1,
+    "Action": "Delete promocode: Promo10 11%",
+    "Timestamp": "2025-12-07T22:03:33.183"
+  },
+  {
+    "LogID": 13,
+    "UserID": 1,
+    "Action": "Delete promocode: WINTER50 50%",
+    "Timestamp": "2025-12-07T21:44:54.820"
+  },
+  {
+    "LogID": 12,
+    "UserID": 1,
+    "Action": "Insert promocode: WINTER50 50%",
+    "Timestamp": "2025-12-07T21:44:41.317"
+  },
+  {
+    "LogID": 11,
+    "UserID": 1,
+    "Action": "Delete product: New Jacket 199.99 50",
+    "Timestamp": "2025-12-07T17:59:47.037"
+  },
+  {
+    "LogID": 10,
+    "UserID": 1,
+    "Action": "Insert product: New Jacket 199.99 50",
+    "Timestamp": "2025-12-07T17:47:15.337"
+  },
+  {
+    "LogID": 9,
+    "UserID": 1,
+    "Action": "Update product: Product_12 64.65 13 -> Updated Jacket 179.99 40",
+    "Timestamp": "2025-12-07T17:47:19.790"
+  },
+  {
+    "LogID": 8,
+    "UserID": 1,
+    "Action": "Delete product: Updated Jacket 179.99 40",
+    "Timestamp": "2025-12-07T17:47:40.117"
+  },
+  {
+    "LogID": 7,
+    "UserID": 1,
+    "Action": "Insert promocode: WINTER50 50%",
+    "Timestamp": "2025-12-07T17:48:21.817"
+  },
+  {
+    "LogID": 6,
+    "UserID": 1,
+    "Action": "Delete promocode: WINTER50 50%",
+    "Timestamp": "2025-12-07T17:48:39.793"
+  },
+  {
     "LogID": 5,
     "UserID": 1,
     "Action": "Delete promocode: WINTER50 50%",

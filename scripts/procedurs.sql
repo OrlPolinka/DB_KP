@@ -92,6 +92,22 @@ as begin try
 		return;
 	end;
 
+	-- Проверяем, используется ли товар в заказах (история заказов)
+	if exists(
+		select 1 from OrderItems where ProductID = @ProductID
+	)
+	begin
+		raiserror('Невозможно удалить товар: товар используется в заказах. Удаление запрещено для сохранения истории.', 16, 1);
+		return;
+	end;
+
+	-- Удаляем товар из избранного
+	delete from Favorites where ProductID = @ProductID;
+
+	-- Удаляем товар из корзины
+	delete from CartItems where ProductID = @ProductID;
+
+	-- Теперь можно удалить товар
 	delete from Products where ProductID = @ProductID;
 
   commit transaction;
@@ -107,24 +123,66 @@ go
 create or alter procedure SearchProducts
 	@Keyword nvarchar(MAX)
 as begin try
+	-- Поиск нечувствителен к регистру и ищет по названию и описанию
+	declare @SearchKeyword nvarchar(MAX);
+	
+	-- Проверяем и обрабатываем ключевое слово
+	if @Keyword is null or LEN(LTRIM(RTRIM(@Keyword))) = 0
+	begin
+		select top 0
+			p.ProductID, p.ProductName, p.Description, c.CategoryName, p.Price,
+            p.Price as DiscountedPrice, p.StockQuantity, p.ImageURL
+        from Products p
+        join Categories c on c.CategoryID = p.CategoryID;
+		return;
+	end
+	
+	set @SearchKeyword = '%' + LOWER(LTRIM(RTRIM(@Keyword))) + '%';
+	
+	-- Если ключевое слово пустое после обработки, возвращаем пустой результат
+	if LEN(@SearchKeyword) <= 2
+	begin
+		select top 0
+			p.ProductID, p.ProductName, p.Description, c.CategoryName, p.Price,
+            p.Price as DiscountedPrice, p.StockQuantity, p.ImageURL
+        from Products p
+        join Categories c on c.CategoryID = p.CategoryID;
+		return;
+	end
+	
 	select
-	p.ProductID,
-        p.ProductName,
-        p.Description,
-        c.CategoryName,
-        p.Price,
-        dbo.func_GetDiscountedPrice(p.Price, pr.DiscountPercent) as DiscountedPrice,
-        p.StockQuantity,
-        p.ImageURL
+		p.ProductID,
+		p.ProductName,
+		p.Description,
+		c.CategoryName,
+		p.Price,
+		case 
+			when pr.DiscountPercent is null or pr.DiscountPercent = 0 
+			then p.Price
+			else p.Price - (p.Price * pr.DiscountPercent / 100.0)
+		end as DiscountedPrice,
+		p.StockQuantity,
+		p.ImageURL
 	from Products p 
-	join Categories c
-	on c.CategoryID = p.CategoryID
+	join Categories c on c.CategoryID = p.CategoryID
 	left join Promocodes pr on pr.CategoryID = p.CategoryID 
-	and getdate() between pr.ValidFrom and pr.ValidTo
-	where p.ProductName like '%' + @Keyword + '%';
+		and getdate() between pr.ValidFrom and pr.ValidTo
+	where LOWER(p.ProductName) like @SearchKeyword
+	   or LOWER(p.Description) like @SearchKeyword
+	   or LOWER(c.CategoryName) like @SearchKeyword;
 end try
 begin catch
-	print 'Ошибка: ' + error_message();
+	declare @ErrorMessage nvarchar(4000) = error_message();
+	declare @ErrorNumber int = error_number();
+	declare @ErrorLine int = error_line();
+	
+	-- Выводим ошибку для отладки
+	print 'Ошибка в SearchProducts: ' + @ErrorMessage;
+	print 'Номер ошибки: ' + cast(@ErrorNumber as nvarchar(10));
+	print 'Строка: ' + cast(@ErrorLine as nvarchar(10));
+	
+	-- Возвращаем ошибку через RAISERROR для отладки
+	raiserror('Ошибка в SearchProducts: %s (Номер: %d, Строка: %d)', 16, 1, @ErrorMessage, @ErrorNumber, @ErrorLine);
 end catch
 go
 
@@ -156,7 +214,7 @@ go
 
 
 create or alter procedure FilterSearchProducts
-	@CategoryID int = null
+	@CategoryID int 
 as begin try
 
 	select 
@@ -509,15 +567,18 @@ as begin try
 		return;
 	end;
 
+	-- Обновляем все заказы, которые используют этот промокод, устанавливая PromoID в NULL
+	update Orders set PromoID = null where PromoID = @PromoID;
+
 	delete from Promocodes where PromoID = @PromoID;
 
   commit transaction;
 end try
 begin catch
-	rollback transaction;
-	declare @ErrorMessage nvarchar(4000) = error_message();
-	raiserror(@ErrorMessage, 16, 1);
+  rollback transaction;
+  throw;
 end catch
+
 go
 
 
@@ -802,3 +863,4 @@ begin catch
 
 end catch
 go
+

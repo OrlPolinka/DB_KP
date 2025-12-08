@@ -451,6 +451,123 @@ r.post('/admin/products/delete', requireAuth, requireRole('Admin'), async (req, 
   }
 });
 
+// Выгрузка всех товаров в JSON
+r.get('/admin/products/export', requireAuth, requireRole('Admin'), async (_req, res) => {
+  const pool = await getPool();
+  try {
+    // В БД процедура называется ExportProductToJSON (без s)
+    const { recordset } = await execProc(pool, 'ExportProductsToJSON', []);
+
+    // Процедура возвращает JSON одной строкой в первой колонке
+    const row = Array.isArray(recordset) && recordset[0] ? recordset[0] : null;
+    const firstVal = row ? Object.values(row)[0] : null;
+    const jsonRaw = typeof firstVal === 'string' && firstVal.trim()
+      ? firstVal
+      : JSON.stringify(firstVal ?? []);
+
+    // Нормализуем пути к изображениям: заменяем backslash на slash и обрезаем локальный путь
+    let json = jsonRaw;
+    try {
+      const data = JSON.parse(jsonRaw);
+      if (Array.isArray(data)) {
+        const norm = data.map((p: any) => {
+          if (!p || !p.ImageURL) return p;
+          const raw = String(p.ImageURL);
+          // заменяем обратные слэши и убираем локальный префикс к папке images
+          const normalized = raw
+            .replace(/\\/g, '/')
+            .replace(/^[A-Za-z]:/, '') // убираем диск
+            .replace(/.*\/images\//, '/images/'); // оставляем относительный путь
+          return { ...p, ImageURL: normalized };
+        });
+        json = JSON.stringify(norm, null, 2);
+      }
+    } catch (_err) {
+      // если парс не удался, отдаем как есть
+    }
+
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.send(json);
+  } catch (err: any) {
+    const errorMsg = err.originalError?.info?.message || err.message || 'Ошибка экспорта товаров';
+    console.error('Ошибка экспорта товаров:', {
+      message: err?.message,
+      info: err?.originalError?.info
+    });
+    res.status(500).json({ error: errorMsg });
+  }
+});
+
+// Загрузка товаров из JSON
+r.post('/admin/products/import', requireAuth, requireRole('Admin'), async (req, res) => {
+  const admin = (req as any).user;
+  const pool = await getPool();
+  const jsonData = req.body;
+
+  if (!jsonData) {
+    return res.status(400).json({ error: 'Нет данных для импорта' });
+  }
+
+  try {
+    const jsonString = typeof jsonData === 'string' ? jsonData : JSON.stringify(jsonData);
+
+    // Устанавливаем context_info для триггера
+    await pool.request()
+      .query("set context_info 0x" + toInt(admin.UserID).toString(16).padStart(8, '0') + "000000000000000000000000");
+
+    await execProc(pool, 'ImportProductsFromJSON', [
+      { name: 'JsonData', type: sql.NVarChar(sql.MAX), value: jsonString }
+    ]);
+
+    res.json({ ok: true });
+  } catch (err: any) {
+    const info = err?.originalError?.info;
+    const errorMsg = info?.message || err.message || 'Ошибка импорта товаров';
+    console.error('Ошибка импорта товаров:', {
+      message: err?.message,
+      info,
+      number: info?.number,
+      state: info?.state,
+      procName: info?.procName,
+      lineNumber: info?.lineNumber
+    });
+    res.status(500).json({ error: errorMsg, details: info });
+  }
+});
+
+// Очистка таблицы товаров
+r.delete('/admin/products/all', requireAuth, requireRole('Admin'), async (req, res) => {
+  const admin = (req as any).user;
+  const pool = await getPool();
+
+  const clearSql = `
+    BEGIN TRY
+      BEGIN TRAN;
+      DELETE FROM Favorites WHERE ProductID IN (SELECT ProductID FROM Products);
+      DELETE FROM CartItems WHERE ProductID IN (SELECT ProductID FROM Products);
+      DELETE FROM OrderItems WHERE ProductID IN (SELECT ProductID FROM Products);
+      DELETE FROM Products;
+      COMMIT TRAN;
+    END TRY
+    BEGIN CATCH
+      IF @@TRANCOUNT > 0 ROLLBACK TRAN;
+      THROW;
+    END CATCH;
+  `;
+
+  try {
+    // Устанавливаем context_info для триггера
+    await pool.request()
+      .query("set context_info 0x" + toInt(admin.UserID).toString(16).padStart(8, '0') + "000000000000000000000000");
+
+    await pool.request().query(clearSql);
+    res.json({ ok: true });
+  } catch (err: any) {
+    const errorMsg = err.originalError?.info?.message || err.message || 'Ошибка очистки товаров';
+    res.status(500).json({ error: errorMsg });
+  }
+});
+
 /* -------------------- ADMIN: PROMOCODES -------------------- */
 r.get('/admin/promocodes', async (_, res) => {
   const pool = await getPool();

@@ -104,6 +104,9 @@ export const AdminProductsAPI = {
     imageUrl?: string;
   }) => api.post('/admin/products/update', payload),
   delete: (productId: number) => api.post('/admin/products/delete', { productId }),
+  export: () => api.get('/admin/products/export', { responseType: 'text' }),
+  import: (data: any) => api.post('/admin/products/import', data),
+  clearAll: () => api.delete('/admin/products/all'),
 };
 
 // Admin: Promocodes

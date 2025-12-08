@@ -119,6 +119,31 @@ begin catch
 end catch
 go
 
+create or alter procedure DeleteAllProducts
+	@UserID int
+as begin try
+  begin transaction;
+
+	if not exists(
+		select 1 from UserRoles join Roles on Roles.RoleID = UserRoles.RoleID 
+		where UserRoles.UserID = @UserID and Roles.RoleName = 'Admin'
+	)
+	begin
+		raiserror('Доступ запрещен: только администратор может удалять товары', 16, 1);
+		return;
+	end;
+
+	delete from Products;
+	commit transaction;
+end try
+begin catch
+	rollback transaction;
+	declare @ErrorMessage nvarchar(4000) = error_message();
+	raiserror(@ErrorMessage, 16, 1);
+end catch
+go
+
+
 
 create or alter procedure SearchProducts
 	@Keyword nvarchar(MAX)

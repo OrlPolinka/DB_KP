@@ -131,11 +131,30 @@ set context_info @bin;
 
 exec ExportLogsToJSON;
 
+exec ExportProductsToJSON;
+
+-- sqlcmd -S localhost -d OnlineClothingShop -Q "EXEC ExportProductsToJSON" -o "C:\Users\user\Desktop\λκ, ύκη\αδ\3 κσπρ\κο\DB_KP\json\Products.json" -h -1 -r 1 -y 8000
 
 -- sqlcmd -S localhost -d OnlineClothingShop -Q "EXEC ExportLogsToJSON" -o "C:\Users\user\Desktop\λκ, ύκη\αδ\3 κσπρ\κο\DB_KP\json\Logs.json" -h -1 -r 1 -y 8000
 
 exec GetLogs @UserID = 1;
 exec DeleteLogs @UserID = 1;
+
+exec GetProducts;
+exec DeleteAllProducts @UserID = 1;
+
+
+declare @json nvarchar(max);
+
+select @json = BulkColumn
+from openrowset(
+  bulk 'C:\Users\user\Desktop\λκ, ύκη\αδ\3 κσπρ\κο\DB_KP\json\Products.json',
+  single_clob
+) as j;
+
+exec ImportProductsFromJSON @JsonData = @json;
+
+
 
 declare @json nvarchar(max);
 
@@ -146,6 +165,3 @@ from openrowset(
 ) as j;
 
 exec ImportLogsFromJSON @JsonData = @json;
-
-
-

@@ -152,7 +152,7 @@ export default function CatalogPage() {
         }}>
           Все
         </button>
-        <button onClick={top}>Топ-100</button>
+        <button onClick={top}>Топ</button>
         <input 
           placeholder="Поиск..." 
           value={q} 

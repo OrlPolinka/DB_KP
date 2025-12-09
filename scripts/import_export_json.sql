@@ -89,7 +89,7 @@ as begin try
 		CategoryID int,
 		Price decimal(18, 2),
 		StockQuantity int,
-		ImageURL nvarchar(500)
+		ImageUrl nvarchar(500)
 	)
 	where ProductName is not null;
 

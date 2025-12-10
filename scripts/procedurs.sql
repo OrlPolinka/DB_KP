@@ -556,6 +556,13 @@ as begin try
 		return;
 	end;
 
+	if @ValidFrom < GETDATE() or @ValidTo < GETDATE()
+    begin
+        raiserror('Дата начала и окончания действия промокода не может быть в прошлом', 16, 1);
+        return;
+    end;
+
+
 	insert into Promocodes(Code, DiscountPercent, IsGlobal, CategoryID, ValidFrom, ValidTo) 
 		values (@Code, @DiscountPercent, @IsGlobal, @CategoryID, @ValidFrom, @ValidTo);
 

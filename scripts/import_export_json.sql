@@ -22,17 +22,16 @@ as begin try
 			CategoryID,
 			Price,
 			StockQuantity,
-			-- для URL оставляем '/', для файловых путей меняем '/' -> '\'
             replace(
                 replace(
                     replace(
                         case
                             when ImageUrl like 'http://%' or ImageUrl like 'https://%' then ImageUrl
-                            else replace(ImageUrl, '/', '\')  -- нормализуем к обратным слэшам
+                            else replace(ImageUrl, '/', '\')  
                         end,
-                        char(13), ''),  -- убираем CR
-                    char(10), ''),    -- убираем LF
-                char(9), ''          -- убираем TAB
+                        char(13), ''),  
+                    char(10), ''),    
+                char(9), ''      
             ) as ImageUrl
 	from Products
 	order by ProductID desc

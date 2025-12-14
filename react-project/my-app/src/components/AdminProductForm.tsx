@@ -47,6 +47,13 @@ export default function AdminProductForm({ mode }: Props) {
           productId, productName, description, categoryId, price, stockQuantity, imageUrl
         });
         alert('Товар обновлен');
+        setProductId(0);
+        setProductName('');
+        setDescription('');
+        setCategoryId(0);
+        setPrice(0);
+        setStockQuantity(0);
+        setImageUrl('');
       } else {
         if (!productId) {
           alert('Введите ID товара');

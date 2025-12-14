@@ -176,6 +176,7 @@ delete from Categories;
 delete from Users;
 
 
+
 -- —бросить счЄтчик (если CategoryID Ч IDENTITY)
 DBCC CHECKIDENT ('Categories', RESEED, 0);
 DBCC CHECKIDENT ('Products', RESEED, 0);

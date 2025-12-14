@@ -92,7 +92,6 @@ as begin try
 		return;
 	end;
 
-	-- Проверяем, используется ли товар в заказах (история заказов)
 	if exists(
 		select 1 from OrderItems where ProductID = @ProductID
 	)
@@ -101,13 +100,10 @@ as begin try
 		return;
 	end;
 
-	-- Удаляем товар из избранного
 	delete from Favorites where ProductID = @ProductID;
 
-	-- Удаляем товар из корзины
 	delete from CartItems where ProductID = @ProductID;
 
-	-- Теперь можно удалить товар
 	delete from Products where ProductID = @ProductID;
 
   commit transaction;
@@ -148,10 +144,8 @@ go
 create or alter procedure SearchProducts
 	@Keyword nvarchar(MAX)
 as begin try
-	-- Поиск нечувствителен к регистру и ищет по названию и описанию
 	declare @SearchKeyword nvarchar(MAX);
 	
-	-- Проверяем и обрабатываем ключевое слово
 	if @Keyword is null or LEN(LTRIM(RTRIM(@Keyword))) = 0
 	begin
 		select top 0
@@ -164,7 +158,6 @@ as begin try
 	
 	set @SearchKeyword = '%' + LOWER(LTRIM(RTRIM(@Keyword))) + '%';
 	
-	-- Если ключевое слово пустое после обработки, возвращаем пустой результат
 	if LEN(@SearchKeyword) <= 2
 	begin
 		select top 0
@@ -201,12 +194,10 @@ begin catch
 	declare @ErrorNumber int = error_number();
 	declare @ErrorLine int = error_line();
 	
-	-- Выводим ошибку для отладки
 	print 'Ошибка в SearchProducts: ' + @ErrorMessage;
 	print 'Номер ошибки: ' + cast(@ErrorNumber as nvarchar(10));
 	print 'Строка: ' + cast(@ErrorLine as nvarchar(10));
 	
-	-- Возвращаем ошибку через RAISERROR для отладки
 	raiserror('Ошибка в SearchProducts: %s (Номер: %d, Строка: %d)', 16, 1, @ErrorMessage, @ErrorNumber, @ErrorLine);
 end catch
 go
@@ -374,7 +365,6 @@ as begin try
 		return;
 	end;
 
-	-- Проверка наличия товаров на складе
 	declare @MissingProduct nvarchar(100);
 	select top 1 @MissingProduct = Products.ProductName
 	from CartItems 
@@ -389,7 +379,6 @@ as begin try
 		return;
 	end;
 
-	-- Получаем информацию о промокоде
 	declare @PromoDiscountPercent int = null;
 	declare @PromoIsGlobal bit = 0;
 	declare @PromoCategoryID int = null;
@@ -409,7 +398,6 @@ as begin try
 	values (@UserID, @PromoID, (select StatusID from OrderStatuses where StatusCode = 'pending'));
 	set @OrderID = scope_identity();
 
-	-- Вставляем товары в заказ с учетом промокода (только для нужной категории или глобального)
 	insert into OrderItems (OrderID, ProductID, Quantity, UnitPrice)
 		select @OrderID, 
 			   CartItems.ProductID, 
@@ -424,7 +412,6 @@ as begin try
 		join Products on CartItems.ProductID = Products.ProductID
 		where CartItems.UserID = @UserID;
 
-	-- Уменьшаем количество товаров на складе
 	update Products
 	set StockQuantity = StockQuantity - CartItems.Quantity
 	from Products
@@ -599,7 +586,6 @@ as begin try
 		return;
 	end;
 
-	-- Обновляем все заказы, которые используют этот промокод, устанавливая PromoID в NULL
 	update Orders set PromoID = null where PromoID = @PromoID;
 
 	delete from Promocodes where PromoID = @PromoID;

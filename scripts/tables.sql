@@ -46,8 +46,8 @@ create table Promocodes (
 	PromoID int primary key identity(1, 1),
 	Code nvarchar(100) not null unique,
 	DiscountPercent int not null,
-	IsGlobal bit default 0, --если true, то применяется ко всем товарам
-	CategoryID int null, --если указан, то применяется к определенной категории товаров
+	IsGlobal bit default 0, 
+	CategoryID int null, 
 	ValidFrom datetime not null,
 	ValidTo datetime not null,
 
@@ -67,10 +67,10 @@ create table Favorites (
 	constraint FK_Favorites_Products foreign key (ProductID)
 		references Products(ProductID),
 
-	constraint UQ_Favorites_UserProduct unique (UserID, ProductID) --чтобы один пользователь не добавлял в избранное один и тот же товар несколько раз
+	constraint UQ_Favorites_UserProduct unique (UserID, ProductID) 
 );
 
---корзина
+
 create table CartItems (
 	CartItemID int primary key identity(1, 1),
 	UserID int not null,
@@ -84,15 +84,7 @@ create table CartItems (
 		references Products(ProductID)
 );
 
---статусы заказов:
-	--pending - заказ создан, но не оплачен
-	--paid - заказ оплачен, ожидает обработки
-	--processing - заказ собирается/готовится к отправке
-	--shipped - заказ отправлен клиенту
-	--delivered - заказ доставлен клиенту
-	--cancelled - заказ отменен
-	--returned - заказ возвращен
-	--failed - ошибка оплаты/доставки
+
 create table OrderStatuses (
 	StatusID int primary key identity(1, 1),
 	StatusCode nvarchar(20) not null unique,
@@ -100,7 +92,7 @@ create table OrderStatuses (
 	SortOrder int
 );
 
---заказы
+
 create table Orders (
 	OrderID int primary key identity(1, 1),
 	UserID int not null,
@@ -117,7 +109,7 @@ create table Orders (
 		references OrderStatuses(StatusID)
 );
 
---товары в заказе
+
 create table OrderItems (
 	OrderItemID int primary key identity(1, 1),
 	OrderID int not null,
@@ -132,7 +124,7 @@ create table OrderItems (
 		references Products(ProductID)
 );
 
---отслеживание действий админа
+
 create table Logs (
 	LogID int primary key identity(1, 1),
 	UserID int not null,

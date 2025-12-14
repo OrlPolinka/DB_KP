@@ -129,3 +129,17 @@ export const AdminLogsAPI = {
   exportJSON: () => api.get('/admin/logs/export'),
   importJSON: (data: any[]) => api.post('/admin/logs/import', data),
 };
+
+// Admin: Roles & User Registration
+export const AdminRolesAPI = {
+  list: () => api.get('/admin/roles'),
+};
+
+export const AdminUsersAPI = {
+  register: (data: {
+    username: string;
+    passwordHash: string;
+    email: string;
+    roleName: string;
+  }) => api.post('/admin/users/register', data),
+};

@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import AdminProductForm from '../components/AdminProductForm';
 import AdminPromocodeForm from '../components/AdminPromocodeForm';
+import AdminUserRegistrationForm from '../components/AdminUserRegistrationForm';
 import { AdminProductsAPI } from '../api';
 
 export default function AdminDashboardPage() {
@@ -81,6 +82,7 @@ export default function AdminDashboardPage() {
           />
         </div>
       </div>
+      <AdminUserRegistrationForm />
       <AdminProductForm mode="add" />
       <AdminProductForm mode="update" />
       <AdminProductForm mode="delete" />

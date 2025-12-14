@@ -716,4 +716,40 @@ r.delete('/admin/logs', requireAuth, requireRole('Admin'), async (req, res) => {
   res.json({ ok: true });
 });
 
+/* -------------------- ADMIN: ROLES & USER REGISTRATION -------------------- */
+r.get('/admin/roles', requireAuth, requireRole('Admin'), async (_req, res) => {
+  const pool = await getPool();
+  try {
+    const { recordset } = await execProc(pool, 'GetRoles', []);
+    res.json(recordset || []);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Ошибка загрузки ролей' });
+  }
+});
+
+r.post('/admin/users/register', requireAuth, requireRole('Admin'), async (req, res) => {
+  const admin = (req as any).user;
+  const { username, passwordHash, email, roleName } = req.body;
+  const pool = await getPool();
+
+  try {
+    if (!username || !passwordHash || !email || !roleName) {
+      return res.status(400).json({ error: 'Заполните все обязательные поля' });
+    }
+
+    await execProc(pool, 'RegisterUserWithRole', [
+      { name: 'AdminUserID', type: sql.Int, value: toInt(admin.UserID) },
+      { name: 'Username', type: sql.NVarChar(100), value: username },
+      { name: 'PasswordHash', type: sql.NVarChar(250), value: passwordHash },
+      { name: 'Email', type: sql.NVarChar(100), value: email },
+      { name: 'RoleName', type: sql.NVarChar(50), value: roleName }
+    ]);
+
+    res.json({ ok: true });
+  } catch (err: any) {
+    const errorMsg = err.originalError?.info?.message || err.message || 'Ошибка регистрации пользователя';
+    res.status(500).json({ error: errorMsg });
+  }
+});
+
 export default r;

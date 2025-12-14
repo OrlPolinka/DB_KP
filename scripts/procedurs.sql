@@ -896,3 +896,13 @@ begin catch
 end catch
 go
 
+
+create or alter procedure GetRoles
+as begin try
+	select RoleID, RoleName from Roles order by RoleName;
+end try
+begin catch
+	print 'Ошибка: ' + error_message();
+end catch
+go
+

@@ -198,7 +198,7 @@ export default function CartPage() {
                       color: 'var(--color-success)',
                       fontWeight: 'bold'
                     }}>
-                      🎉 Акция! Скидка {selectedPromo.DiscountPercent}%
+                      Акция! Скидка {selectedPromo.DiscountPercent}%
                     </p>
                   )}
                   <p style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: 'var(--spacing-sm)' }}>

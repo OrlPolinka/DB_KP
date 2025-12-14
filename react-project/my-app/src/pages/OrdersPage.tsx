@@ -38,15 +38,24 @@ export default function OrdersPage() {
     }
   };
 
-  const openDetails = async (orderId: number) => {
-    try {
-      setSelected(orderId);
-      const data = await OrdersAPI.details(orderId);
-      setDetails(data.data || []);
-    } catch (e: any) {
-      alert(e.response?.data?.error ?? 'Ошибка получения деталей');
-    }
-  };
+
+  const toggleDetails = async (orderId: number) => {
+  if (selected === orderId) {
+    // Если уже открыт — скрываем
+    setSelected(null);
+    setDetails([]);
+    return;
+  }
+
+  try {
+    setSelected(orderId);
+    const data = await OrdersAPI.details(orderId);
+    setDetails(data.data || []);
+  } catch (e: any) {
+    alert(e.response?.data?.error ?? 'Ошибка получения деталей');
+  }
+};
+
 
   if (!user) {
     return null;
@@ -64,7 +73,7 @@ export default function OrdersPage() {
         <div key={o.OrderID} className="card">
           <b>Заказ #{o.OrderID}</b> — Итого: {o.TotalPrice.toFixed(2)} — {o.DisplayName}
           <div className="mt-sm">
-            <button onClick={() => openDetails(o.OrderID)}>
+            <button onClick={() => toggleDetails(o.OrderID)}>
               {selected === o.OrderID ? 'Скрыть детали' : 'Показать детали'}
             </button>
           </div>
@@ -72,7 +81,7 @@ export default function OrdersPage() {
             <div className="mt-md" style={{ paddingLeft: 12, borderLeft: '2px solid var(--color-border)' }}>
               {details.map((d, idx) => (
                 <div key={idx} className="mb-sm">
-                  {d.ProductName}: {d.Quantity} × {d.UnitPrice.toFixed(2)} = {d.LineTotal.toFixed(2)} ({d.Status})
+                  {d.ProductName}: {d.Quantity} × {d.UnitPrice.toFixed(2)} = {d.LineTotal.toFixed(2)} 
                 </div>
               ))}
             </div>

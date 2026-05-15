@@ -1,1 +1,2 @@
-# DB_KP
+# Database project
+I use MsSQL Server
